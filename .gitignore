@@ -33,3 +33,6 @@ dist/
 Thumbs.db
 .vscode/
 .idea/
+
+# Prompt and benchmark resource assets are maintained separately
+prompts/
