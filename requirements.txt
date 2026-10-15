@@ -1,0 +1,23 @@
+# Base Python dependencies for the source-level evaluation framework.
+# Install a compatible PyTorch + torchvision build separately from the official
+# PyTorch selector for your OS/CUDA; this file deliberately does not choose one.
+PyYAML>=6.0
+numpy>=1.24,<2
+scipy>=1.10
+Pillow>=10.0
+opencv-python-headless>=4.8
+transformers>=4.57.0
+accelerate
+qwen-vl-utils
+timm
+open_clip_torch
+diffusers>=0.33.0
+imageio
+requests
+safetensors
+matplotlib>=3.7
+
+# Optional video/model adapters may additionally require decord, bitsandbytes,
+# depth-anything-3, open3d, pyceres, kornia-rs, and CUDA-compiled packages.
+# These are intentionally not installed automatically because availability and
+# compatibility depend on the selected evaluator, model terms, Python and CUDA.
