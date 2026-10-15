@@ -1,0 +1,116 @@
+# 常识推理 标准化 Prompt 测试集
+# 涵盖 3 个维度: CS-1物理常识 | CS-2生物常识 | CS-3社会常识
+
+prompts:
+  # ── CS-1: 物理常识 ──
+  - id: CS1-001
+    text: "a ball dropped from a balcony falling to the ground"
+    dimensions: [CS-1]
+    expected: "ball should fall straight down, not float or go up"
+
+  - id: CS1-002
+    text: "a feather and a bowling ball dropped simultaneously in vacuum"
+    dimensions: [CS-1]
+    expected: "both should fall at same rate (no air resistance)"
+
+  - id: CS1-003
+    text: "a cork floating on water while a stone sinks"
+    dimensions: [CS-1]
+    expected: "cork floats, stone sinks - density matters"
+
+  - id: CS1-004
+    text: "sun casting a long shadow of a person at sunset"
+    dimensions: [CS-1]
+    expected: "shadow direction opposite to sun, length proportional to sun angle"
+
+  - id: CS1-005
+    text: "ice cubes floating in a glass of water"
+    dimensions: [CS-1]
+    expected: "ice floats because it's less dense than liquid water"
+
+  - id: CS1-006
+    text: "smoke rising from a chimney into the sky"
+    dimensions: [CS-1]
+    expected: "smoke rises due to hot air buoyancy, not falls"
+
+  - id: CS1-007
+    text: "a magnet attracting iron nails on a table"
+    dimensions: [CS-1]
+    expected: "iron moves toward magnet, not away; non-magnetic objects unaffected"
+
+  - id: CS1-008
+    text: "a mirror reflecting a person's face clearly"
+    dimensions: [CS-1]
+    expected: "reflection should be mirror-image, not distorted or absent"
+
+  - id: CS1-009
+    text: "water flowing downhill in a stream"
+    dimensions: [CS-1]
+    expected: "water flows from high to low, not uphill"
+
+  - id: CS1-010
+    text: "a pendulum swinging back and forth"
+    dimensions: [CS-1]
+    expected: "amplitude decreases gradually due to air friction, not increasing"
+
+  # ── CS-2: 生物常识 ──
+  - id: CS2-001
+    text: "a horse galloping across a field"
+    dimensions: [CS-2]
+    expected: "correct quadruped gait pattern, legs move in diagonal pairs"
+
+  - id: CS2-002
+    text: "a sunflower turning to face the sun during the day"
+    dimensions: [CS-2]
+    expected: "heliotropism - flowers track sun, not face away"
+
+  - id: CS2-003
+    text: "a fish swimming through coral reef"
+    dimensions: [CS-2]
+    expected: "fish swims with tail fin oscillation, not walking or flying"
+
+  - id: CS2-004
+    text: "a bird landing on a tree branch"
+    dimensions: [CS-2]
+    expected: "wings fold, feet grip branch, bird perches balanced"
+
+  - id: CS2-005
+    text: "a snake slithering across sand"
+    dimensions: [CS-2]
+    expected: "lateral undulation, S-shaped movement, not hopping"
+
+  - id: CS2-006
+    text: "a caterpillar transforming into a butterfly"
+    dimensions: [CS-2]
+    expected: "metamorphosis stages: caterpillar→chrysalis→butterfly, not instant"
+
+  # ── CS-3: 社会常识 ──
+  - id: CS3-001
+    text: "a waiter serving food to customers at a restaurant table"
+    dimensions: [CS-3]
+    expected: "food placed on table, people sitting, proper dining setup"
+
+  - id: CS3-002
+    text: "two people shaking hands in greeting"
+    dimensions: [CS-3]
+    expected: "hands clasp, right hand to right hand, brief contact"
+
+  - id: CS3-003
+    text: "a teacher writing on a blackboard while students watch"
+    dimensions: [CS-3]
+    expected: "teacher faces board, students face front, desks arranged"
+
+  - id: CS3-004
+    text: "cars stopping at a red traffic light at intersection"
+    dimensions: [CS-3]
+    expected: "cars stop before the line, pedestrians cross at green"
+
+  - id: CS3-005
+    text: "a person reading a book in a library"
+    dimensions: [CS-3]
+    expected: "quiet atmosphere, shelves of books, person sitting with book"
+
+  - id: CS3-006
+    text: "a child opening a birthday present with excitement"
+    dimensions: [CS-3]
+    expected: "child unwraps gift, happy expression, wrapping paper removed"

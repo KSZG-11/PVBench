@@ -1,0 +1,442 @@
+# 物理层 (L3) 专用 Prompt — 每个物理维度精确对口的独立评测场景
+#
+# v2 设计原则 (去偏):
+#   1. 每个物理维度 2 条 prompt，专为该维度的评测信号优化
+#   2. 仅描述场景设置、物体、相机和动作描述 — 不描述物理结果
+#   3. 移除所有应然性/规范性语言 ("正确"/"完美"/"应当"/"必须"/"保持"/"一致")
+#   4. 场景尽量简单、单一物理现象主导，避免干扰信号
+#   5. T2V 生成友好的描述（避免视频模型无法实现的极端场景）
+#
+# 为什么去偏:
+#   prompt 描述物理结果 = 告诉模型 "正确答案"
+#   例如 "the steel ball remains perfectly undeformed" 直接给了模型钢球不该形变的信息
+#   → 正确做法: 只描述 "a steel ball being pressed into clay", 让模型自己决定形变不形变
+#   评测维度本身的物理正确性应由 evaluator 打分判定, 不应由 prompt 预判
+#
+# 总计: 25 维 × 2 条 = 50 条 (含 R08-多视图 禁用但保留)
+
+prompts:
+  # ════════════════════════════════════════════════════════════
+  # R01 — 深度估计准确性
+  # 评测方式: VGGT-Omega 单帧深度估计 → AbsRel/δ₁/RMSE
+  # 信号需求: 清晰的前景-背景深度分离、透视线索、已知尺寸参照
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R01-001
+    text: "a long straight road extending to the horizon, with evenly spaced telephone poles on both sides, clear sunny day, static tripod camera, deep depth of field"
+    dimensions: [R01]
+    module: geometry
+    rationale: "道路透视+电线杆等距排列提供强线性透视线索,近远景清晰以最大化深度梯度信号"
+
+  - id: PHY-R01-002
+    text: "a person standing 2 meters from the camera in the foreground, an open door 5 meters behind them in the midground, and a window showing distant buildings 50 meters away in the background, three depth layers with recognizable objects at each depth, indoor scene with natural window light"
+    dimensions: [R01]
+    module: geometry
+    rationale: "三层深度平面(2m/5m/50m)测试深度估计的分层能力"
+
+  # ════════════════════════════════════════════════════════════
+  # R02 — 表面法线方向准确性
+  # 评测方式: StableNormal 法线估计 → 与深度梯度一致性 / GT角度误差
+  # 信号需求: 丰富曲面几何、多朝向平面、清晰表面纹理作为法线线索
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R02-001
+    text: "a white plaster bust of a human head slowly rotating 360 degrees on a motorized turntable, illuminated by a single directional key light from upper-left at 45 degrees producing directional shading across facial contours, neutral gray background, the rotation revealing nose, cheeks, chin, and ears from various surface angles"
+    dimensions: [R02]
+    module: geometry
+    rationale: "石膏像提供连续变化的人脸曲面,单光源提供明暗梯度作为法线学习信号的视觉代理"
+
+  - id: PHY-R02-002
+    text: "a silk cloth draped naturally over a sphere and a cube placed side by side on a table, the cloth conforming to the curved top of the sphere and draping over the edges of the cube, soft diffused lighting from a large window, static camera, close-up"
+    dimensions: [R02]
+    module: geometry
+    rationale: "布料覆盖在球体(曲面) + 立方体(平面)上, 同时测试曲面和平面法线估计能力"
+
+  # ════════════════════════════════════════════════════════════
+  # R03 — 3D点云形状准确性
+  # 评测方式: VGGT-Omega 多帧点云重建 → Chamfer-L1
+  # 信号需求: 具明确3D几何的刚性物体、多视角可见
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R03-001
+    text: "a set of five wooden geometric solids including a sphere, cube, cone, cylinder, and triangular pyramid arranged on a checkered turntable platform, the platform slowly rotating 360 degrees, bright even overhead lighting, clean white background, wood grain texture on all shapes"
+    dimensions: [R03]
+    module: geometry
+    rationale: "五种基本几何体旋转展示提供多视角观测,棋盘格底台提供参考"
+
+  - id: PHY-R03-002
+    text: "a detailed scale model of a classic sedan car on a turntable rotating slowly through a full 360-degree circle, the car model having curved fenders, angular windshield, cylindrical wheels, and cabin roof, diffused studio lighting from all sides, approximately 2 frames per second rotation speed"
+    dimensions: [R03]
+    module: geometry
+    rationale: "汽车模型组合自由曲面和刚体棱边,旋转提供密集多视角"
+
+  # ════════════════════════════════════════════════════════════
+  # R04 — 绝对尺度（物体真实物理尺寸）
+  # 评测方式: DA3(米制深度)+SAM3(bbox) → bbox物理尺寸 vs GT
+  # 信号需求: 已知尺寸参照物、物体与相机在同一平面附近
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R04-001
+    text: "a standard 30-centimeter yellow ruler placed flat on a white desk next to a coffee mug, a smartphone, and a standard pencil, all objects lying in the same horizontal plane, top-down bird's-eye view from directly above at approximately 50cm height, ruler markings readable, even diffused lighting"
+    dimensions: [R04]
+    module: scale_pose
+    rationale: "直尺提供精确30cm绝对尺度参照,俯拍消除透视畸变,常见物品有固定真实世界尺寸范围"
+
+  - id: PHY-R04-002
+    text: "a person of average adult height approximately 170 centimeters tall standing upright next to a standard interior doorway with the door frame fully visible, the person and doorway on the same flat floor, frontal camera at eye level approximately 1.7 meters from the ground, full body from shoes to top of head visible"
+    dimensions: [R04]
+    module: scale_pose
+    rationale: "人体身高 + 门框高度双参照提供绝对尺度锚点"
+
+  # ════════════════════════════════════════════════════════════
+  # R05 — 形变状态（刚体保形 / 软体变形合理性）
+  # 评测方式: VGGT多帧点云+SpatialTracker → 成对点距离变化率
+  # 信号需求: 刚软体同框或单一物体的形变过程
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R05-001
+    text: "a heavy solid steel ball bearing being pressed into a block of soft modeling clay by a mechanical press, steady side view, slow motion, the press gradually lowering the steel ball into the clay surface over several seconds"
+    dimensions: [R05]
+    module: deformation_spatial
+    rationale: "钢球(刚体) + 黏土(软体) 同框,形变幅度大便于定量测量"
+
+  - id: PHY-R05-002
+    text: "a soft rubber stress ball being slowly squeezed between thumb and fingers of a hand, then the grip slowly relaxing over approximately 6 seconds total, close-up side view against plain background"
+    dimensions: [R05]
+    module: deformation_spatial
+    rationale: "应力球挤压与释放提供形状变化过程,连续帧追踪可测量形变梯度"
+
+  # ════════════════════════════════════════════════════════════
+  # R06 — 材料属性（刚度/脆性/弹性/密度/摩擦等）
+  # 评测方式: Qwen3-VL 识别材料+比对力学事件与标准材料矩阵
+  # 信号需求: 可辨识材料+该材料产生特征性物理行为
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R06-001
+    text: "a glass marble being dropped from a height of 30 centimeters onto a ceramic tile floor, slow motion close-up from ground level"
+    dimensions: [R06]
+    module: material
+    rationale: "玻璃(高脆性) 撞击陶瓷(高硬度) — 碰撞事件触发材料矩阵脆性/硬度/断裂韧性多维度"
+
+  - id: PHY-R06-002
+    text: "a rubber ball, a steel ball bearing, and a wooden ball of identical size, dropped simultaneously from the same height onto a polished concrete floor, side view capturing all three trajectories in one frame, slow motion"
+    dimensions: [R06]
+    module: material
+    rationale: "三球同尺寸不同材料(橡胶/钢/木)同条件坠落,弹跳行为差异反映弹性模量/恢复系数/能量耗散属性"
+
+  # ════════════════════════════════════════════════════════════
+  # R07 — 热辐射/热对流
+  # 评测方式: Qwen3-VL 识别热现象+判断温度梯度/辐射/对流方向
+  # 信号需求: 明显热源+热辐射可视效果(发光/热浪/对流)
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R07-001
+    text: "a blacksmith pulling a piece of steel glowing bright orange-yellow from a forge at approximately 1100 degrees Celsius, heat shimmer waves visible in the air above and around the hot metal, the blacksmith holding it with long insulated tongs, dark workshop interior"
+    dimensions: [R07]
+    module: thermal
+    rationale: "高温锻钢提供黑体辐射信号 + 热浪气流感官线索"
+
+  - id: PHY-R07-002
+    text: "a charcoal grill with bright orange-red glowing embers, heat shimmer distorting the background view, a thin slice of meat placed on the grill grate with sizzling and steam, a few drops of oil falling onto the hot coals, evening backyard setting, close-up shot"
+    dimensions: [R07]
+    module: thermal
+    rationale: "炭火热源 + 食物接触高温表面的热传导 + 油滴遇火反应"
+
+  # ════════════════════════════════════════════════════════════
+  # R08 — 多视图几何一致性 [默认关闭]
+  # 评测方式: VGGT-Omega 多视角联合重建 → 相机中心离散度/GT位姿误差
+  # 信号需求: 同一时刻从多个视角拍摄的同一场景
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R08-001
+    text: "a colorful children's playground structure with slides, swings, and climbing frames, captured simultaneously from three viewpoints: a frontal wide shot, a 45-degree left side angle, and an elevated isometric view from a nearby observation deck, children playing on the equipment, sunny afternoon, consistent lighting across all views"
+    dimensions: [R08]
+    module: multiview
+    rationale: "游乐设施包含丰富3D几何,三视角提供充分基线长度"
+
+  - id: PHY-R08-002
+    text: "a classical architecture building facade featuring six tall columns supporting a triangular pediment with detailed frieze carvings, captured simultaneously from three viewpoints: dead center front, 30 degrees to the left, and 30 degrees to the right, all cameras at the same elevation and distance from the building, overcast sky providing shadowless even illumination"
+    dimensions: [R08]
+    module: multiview
+    rationale: "古典建筑规则几何 + 三视角对称布局,阴天漫反射消除阴影干扰"
+
+  # ════════════════════════════════════════════════════════════
+  # R09 — 相对尺度（跨帧包围盒尺寸一致性）
+  # 评测方式: SAM3逐帧分割+bbox尺寸 → 跨帧变异系数CV
+  # 信号需求: 物体因运动或距离变化导致画面内尺寸发生变化
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R09-001
+    text: "a bright red playground ball rolling from the far end of a long straight indoor corridor directly toward the camera, the corridor having evenly spaced floor tiles, fixed camera at the near end of the corridor"
+    dimensions: [R09]
+    module: scale_pose
+    rationale: "球由远及近提供连续的bbox尺寸变化,地板瓷砖间距提供距离参考"
+
+  - id: PHY-R09-002
+    text: "a helium-filled party balloon released from a person's hand at ground level rising into a clear blue sky over approximately 10 seconds, no wind, fixed wide-angle camera capturing the full ascent"
+    dimensions: [R09]
+    module: scale_pose
+    rationale: "气球上升提供视尺寸单调递减,宽幅固定机位捕获全程"
+
+  # ════════════════════════════════════════════════════════════
+  # R10 — 三维位姿精度（相机/物体轨迹 ATE）
+  # 评测方式: VGGT-Omega 相机位姿估计 → 绝对轨迹误差ATE
+  # 信号需求: 清晰的相机运动或物体3D运动、场景有足够3D特征
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R10-001
+    text: "a person walking at a steady pace along a straight white line painted on a gymnasium floor for 10 meters, then turning 90 degrees to the right and continuing for another 5 meters, full body visible, the gym floor having clear parallel court lines, camera following from a fixed elevated position providing a three-quarter overhead view"
+    dimensions: [R10]
+    module: scale_pose
+    rationale: "行人走L型轨迹(10m直行→转弯→5m直行),体育馆地板标线提供平面参考"
+
+  - id: PHY-R10-002
+    text: "a drone flying a circular path with a 5-meter radius at a constant altitude of 3 meters in a large empty warehouse, the warehouse floor marked with a painted circle and radial lines forming a polar coordinate grid, camera fixed on a tripod at the circle's center looking upward at the drone, the drone equipped with LED lights"
+    dimensions: [R10]
+    module: scale_pose
+    rationale: "无人机飞圆形轨迹,地板极坐标网格提供空间参考"
+
+  # ════════════════════════════════════════════════════════════
+  # R11 — 空间关系（多物体相对位置/遮挡/接触的物理合理性）
+  # 评测方式: SAM3多物体分割+遮挡分析+VLM辅助判断空间矛盾
+  # 信号需求: 多个物体之间有明确的空间关系
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R11-001
+    text: "a wooden red cube being placed directly on top of a larger blue cube, then a small yellow cube placed on top of the red cube, building a three-cube vertical tower, side view, the hand moving away after placing each cube"
+    dimensions: [R11]
+    module: deformation_spatial
+    rationale: "三色立方体堆叠提供清晰层级空间关系(蓝在下/红在中/黄在上)"
+
+  - id: PHY-R11-002
+    text: "a toy train engine pulling three colored carriages along a circular wooden train track, the engine first appearing from behind a small station building, then the carriages following the engine around the curve, the train passing in front of and behind the station, side view from outside the track"
+    dimensions: [R11]
+    module: deformation_spatial
+    rationale: "火车绕圈提供遮挡/显现的空间序贯关系"
+
+  # ════════════════════════════════════════════════════════════
+  # R12 — 静态稳定性（静止物体不应移动/形变/抖动）
+  # 评测方式: VGGT逐帧点云比较 → 成对点距离变化
+  # 信号需求: 静态的场景、物体处于稳定状态
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R12-001
+    text: "a Jenga tower of exactly 15 wooden blocks stacked in alternating layers of three blocks each, standing on a sturdy wooden table, no people touching the table, no wind, static tripod camera, steady indoor ceiling lighting, continuous 5-second shot"
+    dimensions: [R12]
+    module: statics_lighting
+    rationale: "15层积木塔:重心高/基底窄,是敏感静力学测试场景"
+
+  - id: PHY-R12-002
+    text: "a dinner table set with a ceramic plate, a water glass, a metal fork, a cloth napkin, and a salt shaker, a person's hand reaching into the frame and placing a steaming bowl of soup onto the empty place setting, static tripod camera, warm dining room lighting"
+    dimensions: [R12]
+    module: statics_lighting
+    rationale: "多物体静态场景中插入新物体(放碗),严格的因果静止条件"
+
+  # ════════════════════════════════════════════════════════════
+  # R13 — 光影空间一致性（光源方向在全帧内应一致）
+  # 评测方式: ReasonX 估计光源方向 → 逐像素/逐物体光源方向一致性
+  # 信号需求: 单一或少量光源、物体有不同朝向的可见表面
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R13-001
+    text: "a single bright desk lamp as the only light source in a dark room, illuminating three objects on a matte white desk from the left side: a white matte sphere, a white matte cube, and a white matte cylinder, the lamp positioned at a fixed location"
+    dimensions: [R13]
+    module: statics_lighting
+    rationale: "单点光源 + 三白体(消除颜色干扰):球体高光/立方体明暗面/圆柱曲面提供多方向法线信号"
+
+  - id: PHY-R13-002
+    text: "a row of five identical vertical wooden poles planted in the ground in a straight line spaced 2 meters apart, lit by the late afternoon sun from the left side at approximately 30 degrees above the horizon, each pole casting a shadow on the flat ground, no clouds, wide shot from the front showing the entire row"
+    dimensions: [R13]
+    module: statics_lighting
+    rationale: "五行杆 + 单一平行光源(太阳),等间距杆提供空间重复结构用于检测光源方向一致性"
+
+  # ════════════════════════════════════════════════════════════
+  # R14 — 磁电相互作用
+  # 评测方式: Qwen3-VL 识别磁/电现象+判断力的方向/强度合理性
+  # 信号需求: 明显的非接触力效应
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R14-001
+    text: "a red horseshoe magnet slowly approaching a scattered pile of silver metal paperclips on a smooth wooden desk, the magnet getting near the paperclips then slowly pulling away, close-up overhead view"
+    dimensions: [R14]
+    module: electromag
+    rationale: "马蹄磁铁 + 回形针是经典磁学演示:磁场梯度力 + 磁化级联"
+
+  - id: PHY-R14-002
+    text: "a Van de Graaff electrostatic generator with its metal dome accumulating charge, visible blue-white electrical sparks jumping from the dome to a grounded metal wand held approximately 5 centimeters away, a person with long hair standing on an insulating platform touching the dome, science classroom setting"
+    dimensions: [R14]
+    module: electromag
+    rationale: "范德格拉夫起电机:火花(介质击穿) + 头发(电荷排斥),同时测试放电与静电场"
+
+  # ════════════════════════════════════════════════════════════
+  # R15 — 位移（3D轨迹 Worldline L2 误差）
+  # 评测方式: SpatialTracker V2 追踪 → Worldline L2 / FailRate
+  # 信号需求: 清晰的线性运动、可追踪的特征点
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R15-001
+    text: "a white billiard cue ball on a green billiard table, rolling from one end cushion toward the opposite end cushion, the green felt surface textured, overhead top-down camera view capturing the entire table, the table's wooden rails and pocket markers visible"
+    dimensions: [R15]
+    module: kinematics
+    rationale: "台球运动提供位移信号,绿色台面呢绒纹理提供密集追踪点,俯拍消除透视畸变"
+
+  - id: PHY-R15-002
+    text: "a metronome with its weighted rod swinging back and forth, visible against a plain white background with measurement angle markings drawn behind the rod at 10-degree intervals from -45 to +45 degrees, the metronome's base fixed in place, side view, tempo of 60 beats per minute"
+    dimensions: [R15]
+    module: kinematics
+    rationale: "节拍器单摆提供周期性位移:背景角度标记提供像素级位置参考,固定支点约束运动类型"
+
+  # ════════════════════════════════════════════════════════════
+  # R16 — 速度与加速度（速度CV自洽性 / GT速度误差）
+  # 评测方式: SpatialTracker V2 追踪 → 逐帧速度 → CV一致性检验
+  # 信号需求: 包含速度变化的运动
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R16-001
+    text: "a metal ball bearing released from rest at the top of a long smooth inclined ramp at approximately 15 degrees from horizontal, the ramp having tick marks every 10 centimeters along its length, the ball rolling down the ramp and then off the end of the ramp through the air, side view showing the full ramp length"
+    dimensions: [R16]
+    module: kinematics
+    rationale: "斜面运动 + 末段空中轨迹(类抛体),刻度线提供位置-时间对"
+
+  - id: PHY-R16-002
+    text: "a car starting from a complete stop at a red traffic light on a straight flat road, then accelerating and eventually reaching a cruising speed, side view from the sidewalk, evenly spaced street lamp posts approximately 30 meters apart along the road"
+    dimensions: [R16]
+    module: kinematics
+    rationale: "汽车从静止加速 → 匀速巡航,路灯杆(30m间距)提供离散位置参考"
+
+  # ════════════════════════════════════════════════════════════
+  # R17 — 角速度（旋转CV自洽性 / GT角速度误差）
+  # 评测方式: SpatialTracker Kabsch旋转估计 → angular_velocity → CV
+  # 信号需求: 主导刚体旋转运动,旋转轴和角速度可测
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R17-001
+    text: "a ceiling fan with three clearly visible blades, viewed from directly below looking up at the ceiling, the fan hub at the center of the frame, a small colored sticker attached to the tip of one blade, the fan running, clean white ceiling background"
+    dimensions: [R17]
+    module: kinematics
+    rationale: "吊扇提供旋转运动,彩色标记提供角位置追踪点,正下方视角消除透视畸变"
+
+  - id: PHY-R17-002
+    text: "a bicycle wheel mounted horizontally on a vertical axle stand, given an initial hard push and then spinning freely, the wheel's spokes providing angular markers with 36 evenly spaced spokes, side view, the spinning lasting approximately 30 seconds"
+    dimensions: [R17]
+    module: kinematics
+    rationale: "自行车轮自由旋转 → 减速停止,36根辐条提供天然角度标记(每10°)"
+
+  # ════════════════════════════════════════════════════════════
+  # R18 — 光影时间一致性（光源在时间上应稳定）
+  # 评测方式: ReasonX逐帧光源方向 → 跨帧角度变化
+  # 信号需求: 固定光源 + 静止场景
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R18-001
+    text: "a still life arrangement of three pieces of fruit, a ceramic vase, and a draped cloth on a wooden table, illuminated by a single studio light source from the upper left at a fixed position, no camera movement, static tripod camera, continuous 5-second shot"
+    dimensions: [R18]
+    module: statics_lighting
+    rationale: "静物 + 固定人工光源,水果曲面上的高光点和布料褶皱的明暗边界作为光源方向的探针"
+
+  - id: PHY-R18-002
+    text: "a candle burning in a draft-free room, the candle holder and table surface visible in the surrounding area, close-up macro shot, the candle burning for the full duration of the video"
+    dimensions: [R18]
+    module: statics_lighting
+    rationale: "无风蜡烛是敏感的时域光照稳定性测试,任何微扰会导致火焰变化(检测光照的时间一致性)"
+
+  # ════════════════════════════════════════════════════════════
+  # R19 — 跨帧几何一致性（连续帧间3D结构漂移）
+  # 评测方式: VGGT-Omega逐帧点云 → 相邻帧Chamfer漂移量 + FlowSeek光流AEPE
+  # 信号需求: 平滑的相机运动或场景变化
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R19-001
+    text: "a slow steady dolly-in camera movement moving forward through a straight architectural corridor with identical columns on both sides at regular intervals, the camera advancing at approximately 0.3 meters per second"
+    dimensions: [R19]
+    module: motion_persistence
+    rationale: "建筑柱廊推轨镜头:dolly-in运动导致场景深度结构持续变化,连续帧间柱子的几何应连续"
+
+  - id: PHY-R19-002
+    text: "a 360-degree orbital camera slowly circling around a detailed white marble statue of a horse on a pedestal, the camera completing one full orbit in 12 seconds, the horse statue having detailed 3D anatomy including muscular neck, legs, and flowing tail, neutral studio lighting"
+    dimensions: [R19]
+    module: motion_persistence
+    rationale: "雕像环绕:轨道镜头提供密集视角变化,相邻帧视角差小,可检测跨帧几何一致性"
+
+  # ════════════════════════════════════════════════════════════
+  # R20 — 运动连续性（无跳帧/瞬移/运动断层）
+  # 评测方式: SpatialTracker+VGGT轨迹→运动连续性 + VFIMamba帧插值
+  # 信号需求: 平滑连续的长时程运动
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R20-001
+    text: "an Olympic figure skater gliding across a large ice rink performing a long continuous spiral sequence lasting at least 8 seconds, the skater moving in a flowing curve tracing a large figure-eight pattern on the ice, the blade leaving a tracing on the ice surface, wide shot from the stands capturing the full rink"
+    dimensions: [R20]
+    module: motion_persistence
+    rationale: "花样滑冰螺旋线:长时程(8s+)连续曲线运动,冰刀划痕提供运动轨迹视觉参考"
+
+  - id: PHY-R20-002
+    text: "a large koi fish swimming in a continuous loop in a clear garden pond, the fish making a figure-eight path with turns, the body and tail undulating from head to tail, bubbles rising from the fish's gills, viewed from directly above through clear water"
+    dimensions: [R20]
+    module: motion_persistence
+    rationale: "锦鲤游动:鱼类波动推进产生从头到尾的体态波,时空连续性极强,气泡上浮提供独立的匀速运动参考"
+
+  # ════════════════════════════════════════════════════════════
+  # R21 — 物体恒存（遮挡后重新出现）
+  # 评测方式: SAM3追踪ID+SpatialTracker轨迹 → 出遮挡时ID连续性+位置预测
+  # 信号需求: 物体被遮挡后重新出现
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R21-001
+    text: "a bright yellow tennis ball rolling from left to right across a room, passing completely behind a large brown sofa positioned in the middle of the room for approximately 1 second, then emerging from the right side of the sofa, wide static camera capturing the full traversal"
+    dimensions: [R21]
+    module: motion_persistence
+    rationale: "球过沙发:经典物体恒存(遮挡-重现)测试,1秒遮挡时长"
+
+  - id: PHY-R21-002
+    text: "a person walking along a forest path, passing behind a large thick oak tree trunk for about 1.5 seconds, then emerging from the other side continuing their walk, the tree trunk providing a vertical occlusion boundary, the leaves and branches above the occlusion zone static, clear daylight, side-tracking camera"
+    dimensions: [R21]
+    module: motion_persistence
+    rationale: "人过树干:人体(多关节/衣着/步态)遮挡后重现,1.5秒遮挡测试对复杂目标的持久追踪能力"
+
+  # ════════════════════════════════════════════════════════════
+  # R22 — 力的动态效应（力→加速度→运动变化的因果链）
+  # 评测方式: SpatialTracker轨迹→力估计→与视觉中力来源的一致性
+  # 信号需求: 可见的力施加过程 + 对应的运动变化
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R22-001
+    text: "a person's hand pushing a heavy cardboard box across a smooth wooden floor, the box initially at rest, the hand pushing it then releasing the box, side view at floor level"
+    dimensions: [R22]
+    module: dynamics
+    rationale: "推箱子序列:推力施加 → 释放,力 → 加速度因果链可从运动学数据(速度变化)反推"
+
+  - id: PHY-R22-002
+    text: "a spring-loaded toy cannon, a hand pushing the spring inward compressing it, then releasing the trigger causing the spring to expand and launch a small foam ball vertically upward, the ball rising then falling back down, side view, slow motion"
+    dimensions: [R22]
+    module: dynamics
+    rationale: "弹簧炮:弹簧力(弹性回复力) → 弹射 → 重力抛物,力源明确(弹簧/重力)且方向确定"
+
+  # ════════════════════════════════════════════════════════════
+  # R23 — 动量守恒（碰撞前后总动量不变）
+  # 评测方式: SpatialTracker轨迹→质量估计+速度→动量前后对比
+  # 信号需求: 清晰的两体碰撞/相互作用
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R23-001
+    text: "a classic Newton's cradle desktop toy with five identical polished steel balls suspended by thin strings from a metal frame, one ball on the left end being pulled back by hand and released to swing down and strike the row of remaining four stationary balls, front view, slow motion"
+    dimensions: [R23]
+    module: dynamics
+    rationale: "牛顿摆:等质量弹性碰撞,动量传递的经典演示"
+
+  - id: PHY-R23-002
+    text: "two identical ice hockey pucks sliding on an air hockey table toward each other from opposite directions, colliding head-on at the center of the table, top-down overhead view capturing the entire table"
+    dimensions: [R23]
+    module: dynamics
+    rationale: "对心正碰(等质量 + 等速反向),气垫桌面低摩擦,无旋转确保平动动能纯净"
+
+  # ════════════════════════════════════════════════════════════
+  # R24 — 能量守恒/耗散（总机械能变化合理性）
+  # 评测方式: SpatialTracker轨迹→动能+位能→总机械能变化
+  # 信号需求: 可见的能量形式转换（动能↔势能）或耗散
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R24-001
+    text: "a simple pendulum consisting of a heavy brass bob suspended by a thin string from a fixed ceiling point, the bob pulled to the side to a 45-degree angle from vertical and released, swinging freely back and forth, side view with angular markings from 0 to 45 degrees behind the pendulum, capturing at least 5 full oscillation cycles"
+    dimensions: [R24]
+    module: dynamics
+    rationale: "单摆:势能(mgh)↔动能周期转换,5周期提供统计显著性"
+
+  - id: PHY-R24-002
+    text: "a tennis ball being dropped from a fixed height of exactly 2 meters onto a hard concrete floor, side view with a measuring stick placed vertically next to the bounce zone showing height markings every 10 centimeters, slow motion capturing the full bounce sequence"
+    dimensions: [R24]
+    module: dynamics
+    rationale: "弹跳序列:每次碰撞能量损失,标尺提供高度参考"
+
+  # ════════════════════════════════════════════════════════════
+  # R25 — 相变（固→液→气转变的物理合理性）
+  # 评测方式: Qwen3-VL 识别相变类型+判断相变方向/温度梯度合理性
+  # 信号需求: 明显的物态变化过程
+  # ════════════════════════════════════════════════════════════
+  - id: PHY-R25-001
+    text: "a large clear ice cube sitting on a warm dark stone kitchen counter at room temperature, macro close-up view, 15-second continuous shot showing the ice cube on the counter"
+    dimensions: [R25]
+    module: phase_change
+    rationale: "冰融化(固→液):最经典相变,关键信号为冰体积变化/水滴流动/固液界面"
+
+  - id: PHY-R25-002
+    text: "a block of dark chocolate being heated in a glass double boiler over simmering water, a wooden spoon occasionally stirring the mixture, close-up side view showing the glass bowl"
+    dimensions: [R25]
+    module: phase_change
+    rationale: "巧克力融化(固→液):非纯物质相变(混合物/软化区间),导热方向从接触玻璃壁→中心"

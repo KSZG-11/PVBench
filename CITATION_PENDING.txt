@@ -1,0 +1,10 @@
+PVBench: Quantifying Physical Plausibility in Video Generation with Object-Level Physical Measurements
+
+Authors: Kaiwei Chen, Moran Li, Zhenye Gan, Yabiao Wang, Chengjie Wang, Kexin Zhang, Yong Liu, Jiangning Zhang.
+
+Affiliations:
+1. Zhejiang University (zju.edu.cn)
+2. ByteDance Inc. (bytedance.com)
+3. Tencent (tencent.com)
+
+The paper identifier, venue, year, DOI/arXiv ID, and final corresponding-author contact are pending confirmation. Before public release, replace this file with a final CITATION.cff and/or BibTeX entry.

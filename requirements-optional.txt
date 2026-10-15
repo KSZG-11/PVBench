@@ -1,0 +1,9 @@
+# Additional dependencies are model- and evaluator-specific.
+# Review upstream terms and compatibility before installing any of these.
+decord
+bitsandbytes
+# depth-anything-3
+# open3d
+# pyceres
+# kornia_rs
+# nvdiffrast / pytorch3d / mamba-ssm / causal-conv1d require platform-specific builds

@@ -1,0 +1,548 @@
+# ============================================================================
+# Physical World Benchmark — 物理维度评测 Prompt 库（v2 重构）
+# ============================================================================
+# 设计原则（对应 PHYSICS_TAXONOMY.md 与用户要求）：
+#   1) 每个维度不再固定 2 条，数量按"被测信号丰富度"自由设定（本库 2~4 条不等）。
+#   2) 每条 prompt 提供三态文本：
+#        t2v_prompt : T2V 文本生成用（初态+动作合一，但不透露正确物理结果）
+#        t2i_prompt : I2V 首帧构图用（只描述第一帧的物体/场景/光照，不描述动作结果）
+#        i2v_prompt : I2V 视频生成用（描述动作/运动，与 t2i_prompt 的首帧衔接）
+#      I2V 流程：先 t2i_prompt 出首帧图 → 再以 i2v_prompt + 首帧图生成视频。
+#      T2V 流程：直接用 t2v_prompt。若某条缺 t2v_prompt，回退到 i2v_prompt。
+#   3) 严格不泄露正确答案：只描述"物体、场景、相机、动作"，绝不写
+#      "保持刚性/竖直下落/不形变/匀速/对称"等应然结论。物理对错交由 evaluator 判定。
+#   4) 越具体越好：给出可观测的参照物、尺度、相机机位、运动幅度，使被测物理量易于评测。
+#   5) I2V 的 t2i_prompt 与 i2v_prompt 必须"首帧→动作"正确对应，二者不是同一句话。
+# ============================================================================
+
+schema_version: 2
+default_disabled_modules: [multiview]   # R08 默认关，仅 CI2V/显式开启
+
+dimensions:
+
+  # ───────────────────────── 第一类：物体自身物理性质 ─────────────────────────
+  R01:
+    name: 深度
+    module: geometry
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R01-001
+        t2v_prompt: "two large matte cubes on a plain neutral studio background, a bright red cube placed directly in front of and partially occluding a bright blue cube, both cubes centered in the frame, their projected silhouettes overlap by about forty percent, wide visible portions of both cubes remain on the left and right sides of the overlap, fixed frontal camera, even diffuse lighting, no camera movement, no object movement"
+        t2i_prompt: "two large matte cubes on a plain neutral studio background, a bright red cube placed directly in front of and partially occluding a bright blue cube, both cubes centered in the frame, their projected silhouettes overlap by about forty percent, visible portions of both cubes remain on both sides of the overlap, fixed frontal camera, even diffuse lighting"
+        i2v_prompt: "hold the exact composition completely still for the entire shot, keep the camera fixed, keep both cubes stationary, preserve the same partial occlusion and the same visible overlap"
+        rationale: "两个大面积高对比标准几何体，明确要求约40%投影重叠和两侧可见专属区域，降低生成与SAM3召回不稳定性"
+      - id: PHY-R01-002
+        t2v_prompt: "a large yellow cylinder positioned directly in front of a large green sphere on a plain neutral studio background, the cylinder partially occluding about forty percent of the sphere, both silhouettes overlap near the center of the frame, visible parts of the sphere remain around both sides of the cylinder, fixed frontal camera, even diffuse lighting, no camera movement, no object movement"
+        t2i_prompt: "a large yellow cylinder directly in front of a large green sphere on a plain neutral studio background, the cylinder partially occluding about forty percent of the sphere, both silhouettes overlapping near the center, visible parts of the sphere remaining on both sides, fixed frontal camera, even diffuse lighting"
+        i2v_prompt: "hold the exact composition completely still for the entire shot, keep the camera fixed, keep the cylinder and sphere stationary, preserve the same partial occlusion"
+        rationale: "保留已经得到5分的圆柱-球体结构，同时增大物体并明确遮挡比例，作为最可靠R01模板"
+      - id: PHY-R01-003
+        t2v_prompt: "a large red cube placed directly in front of a tall blue cylinder on a plain neutral studio background, the red cube partially occluding the middle section of the cylinder, their projected silhouettes overlap by about forty percent near the center, both objects remain clearly visible around the overlap, fixed frontal camera, even diffuse lighting, no camera movement, no object movement"
+        t2i_prompt: "a large red cube placed in front of a tall blue cylinder on a plain neutral studio background, the red cube partially occluding the middle section of the cylinder, their projected silhouettes overlapping by about forty percent, both objects clearly visible around the overlap, fixed frontal camera, even diffuse lighting"
+        i2v_prompt: "hold the exact composition completely still for the entire shot, keep the camera fixed, keep the red cube and blue cylinder stationary, preserve the same partial occlusion and visible overlap"
+        rationale: "用SAM3已支持的cube和blue cylinder替代不稳定的rectangular box，保留不同形状遮挡多样性"
+
+  R02:
+    name: 表面法线
+    module: geometry
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R02-001
+        t2v_prompt: "a matte white plaster bust of a human head on a motorized turntable rotating slowly, a single light from the upper left, plain gray backdrop, the surface shows smooth curved cheeks, nose and chin"
+        t2i_prompt: "a matte white plaster bust of a human head on a turntable, a single light from the upper left, plain gray backdrop"
+        i2v_prompt: "the turntable rotates the bust a full turn at slow speed, the light stays fixed so shading sweeps across the face"
+        rationale: "连续人脸曲面 + 单光源明暗梯度，StableNormal 法线方向的理想信号；不写「法线应平滑」"
+      - id: PHY-R02-002
+        t2v_prompt: "a satin cloth draped over a sphere and a cube side by side on a table, a large window providing soft side light, close-up, the cloth wraps the round top and folds over the cube edges"
+        t2i_prompt: "a satin cloth draped over a sphere and a cube side by side on a table, soft side light from a large window, close-up"
+        i2v_prompt: "a gentle breeze ruffles the free edge of the cloth for a moment, then it settles"
+        rationale: "布料同时覆盖曲面(球)与平面(立方体)，同时检验曲面与平面法线；局部微动避免首帧过静"
+      - id: PHY-R02-003
+        t2v_prompt: "three vertical plaster columns of differing cross-section — one round, one square, one fluted — lit by one lamp from the right, dark studio, camera facing them"
+        t2i_prompt: "three vertical plaster columns — round, square, fluted — lit by one lamp from the right, dark studio, camera facing them"
+        i2v_prompt: "the lamp is switched off and a different lamp turns on from the left side, the shading band moves across the columns"
+        rationale: "不同截面柱体对比法线方向差异，左右光源切换顺带校验法线-光照一致性"
+
+  R03:
+    name: 形状
+    module: geometry
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R03-001
+        t2v_prompt: "five wooden solids — a sphere, a cube, a cone, a cylinder and a triangular prism — on a turntable that rotates one full turn, even overhead light, white backdrop, visible wood grain on each"
+        t2i_prompt: "five wooden solids — sphere, cube, cone, cylinder, triangular prism — on a turntable, even overhead light, white backdrop"
+        i2v_prompt: "the turntable rotates the set of shapes through a full 360 degrees at steady speed"
+        rationale: "五种基元几何体多视角暴露完整三维轮廓，VGGT 点云 Chamfer 可比对理想模型"
+      - id: PHY-R03-002
+        t2v_prompt: "a detailed model of a classic sedan on a turntable, curved fenders, angular windshield, cylindrical wheels and a cabin roof, studio light from all sides, rotating slowly"
+        t2i_prompt: "a detailed model of a classic sedan on a turntable, studio light from all sides"
+        i2v_prompt: "the turntable turns the car one full circle so every side becomes visible"
+        rationale: "自由曲面与刚体棱边并存，旋转提供密集多视角，检验重建形状完整无塌陷"
+      - id: PHY-R03-003
+        t2v_prompt: "a glossy red torus knot sculpture on a pedestal, a spotlight from above, black background, the knot has no flat faces"
+        t2i_prompt: "a glossy red torus knot sculpture on a pedestal, spotlight from above, black background"
+        i2v_prompt: "the pedestal rotates the knot slowly so its intertwined loops are seen from many angles"
+        rationale: "拓扑非平凡形状（环面纽结）考验点云能否还原连续无自交的三维结构"
+
+  R04:
+    name: 绝对尺度
+    module: scale_pose
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R04-001
+        t2v_prompt: "a 30-centimeter yellow ruler lying flat on a white desk next to a coffee mug, a smartphone and a wooden pencil, all on the same horizontal plane, top-down view from directly above, ruler markings readable"
+        t2i_prompt: "a 30-centimeter yellow ruler flat on a white desk next to a coffee mug, a smartphone and a wooden pencil, same horizontal plane, top-down view"
+        i2v_prompt: "a hand enters and slides the pencil a short distance along the ruler, then stops; the ruler does not move"
+        rationale: "直尺提供精确 30cm 绝对尺度锚点；常见物品有公认真实尺寸区间，DA3 米制深度可校验"
+      - id: PHY-R04-002
+        t2v_prompt: "an adult standing next to a standard interior doorway with the full door frame visible, both on the same floor, frontal camera at eye level, full body from shoes to head"
+        t2i_prompt: "an adult standing next to a standard interior doorway with the full door frame visible, same floor, frontal camera at eye level"
+        i2v_prompt: "the person turns slightly to the side and then returns to face the camera, staying in place"
+        rationale: "人体身高 + 门框高度双参照提供绝对尺度，便于判断米制尺寸是否合理"
+      - id: PHY-R04-003
+        t2v_prompt: "a standard tennis ball, a soccer ball and a basketball resting on a gym floor in a row, a one-meter measuring stick laid beside them, wide shot from floor level"
+        t2i_prompt: "a tennis ball, a soccer ball and a basketball in a row on a gym floor, a one-meter measuring stick beside them, wide shot"
+        i2v_prompt: "a hand rolls the tennis ball a little toward the soccer ball and stops; the measuring stick stays put"
+        rationale: "三种已知直径球 + 米尺，三锚点交叉验证绝对尺度估计"
+
+  R05:
+    name: 当前形变状态
+    module: deformation_spatial
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R05-001
+        t2v_prompt: "a heavy steel ball being pressed down into a block of soft modeling clay by a mechanical press, side view, the steel ball sinks into the clay surface over several seconds"
+        t2i_prompt: "a heavy steel ball resting just above a block of soft modeling clay, side view, before contact"
+        i2v_prompt: "the press lowers the steel ball into the clay and holds it there, the clay surface yields around the ball"
+        rationale: "钢球(刚体) + 黏土(软体)同框，形变幅度大，VGGT/SpatialTracker 可量化应变"
+      - id: PHY-R05-002
+        t2v_prompt: "a rubber stress ball squeezed between thumb and fingers, then the grip slowly relaxes, close-up side view against a plain background"
+        t2i_prompt: "a rubber stress ball held loosely between thumb and fingers, close-up side view, plain background"
+        i2v_prompt: "the hand squeezes the ball and then gradually releases it over several seconds"
+        rationale: "挤压-释放连续过程，逐帧点云可测形变梯度与回弹"
+      - id: PHY-R05-003
+        t2v_prompt: "a thin aluminum sheet bent by a pair of pliers at its center into a V shape, top-down view, the bend propagates from the clamp point"
+        t2i_prompt: "a thin flat aluminum sheet on a table, top-down view, before any bending"
+        i2v_prompt: "a pair of pliers grips the center and folds the sheet into a sharp V, then holds"
+        rationale: "金属薄板弯折提供明确的非刚体形变场，检验 Green 应变估计"
+
+  R06:
+    name: 材料属性
+    module: material
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R06-001
+        t2v_prompt: "a glass marble dropped from a short height onto a ceramic tile floor, slow-motion close-up from ground level"
+        t2i_prompt: "a glass marble held just above a ceramic tile floor, slow-motion close-up, ground level"
+        i2v_prompt: "the marble is released and strikes the tile, fragments scatter across the floor"
+        rationale: "玻璃(高脆)撞陶瓷(高硬)触发脆断/碎片行为，Qwen3-VL 比对材料矩阵"
+      - id: PHY-R06-002
+        t2v_prompt: "a rubber ball, a steel ball bearing and a wooden ball of the same size dropped together from the same height onto a concrete floor, side view, slow motion"
+        t2i_prompt: "a rubber ball, a steel ball bearing and a wooden ball of the same size held at the same height above a concrete floor, side view"
+        i2v_prompt: "all three are released at once and bounce on the concrete, captured in one frame"
+        rationale: "同尺寸三材料同条件坠落，弹跳差异反映弹性模量/恢复系数/能量耗散"
+      - id: PHY-R06-003
+        t2v_prompt: "a square cloth napkin held at two corners and allowed to hang, then swung gently side to side, plain background"
+        t2i_prompt: "a square cloth napkin held at two corners, hanging under its own weight, plain background"
+        i2v_prompt: "the hand swings the napkin side to side so it folds and unfolds with the motion"
+        rationale: "布料垂坠与惯性摆动考验极低刚度/褶皱弹性材料行为"
+      - id: PHY-R06-004
+        t2v_prompt: "a heap of dry sand being poured from a bucket into a conical pile on a table, close-up"
+        t2i_prompt: "a heap of dry sand already forming a conical pile on a table, close-up"
+        i2v_prompt: "more sand streams from a bucket above and the pile grows, grains tumble down the slope"
+        rationale: "颗粒离散流动 + 休止角，检验沙的颗粒流变材料属性"
+
+  R07:
+    name: 热辐射
+    module: thermal
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R07-001
+        t2v_prompt: "a piece of steel pulled from a forge glowing orange-yellow, heat shimmer visible in the air above it, held by long tongs, dark workshop interior"
+        t2i_prompt: "a piece of steel held by tongs, already glowing orange-yellow, dark workshop interior"
+        i2v_prompt: "the hot steel is lifted and turned slowly, the glow and the air shimmer above it shift with the motion"
+        rationale: "高温锻钢提供黑体辐射颜色序列 + 热浪气流感，五维辐射检验信号齐备"
+      - id: PHY-R07-002
+        t2v_prompt: "a charcoal grill with glowing embers, a thin slice of meat on the grate with steam rising, a few drops of oil falling onto the coals, close-up"
+        t2i_prompt: "a charcoal grill with glowing embers, a thin slice of meat on the grate, close-up"
+        i2v_prompt: "oil drops fall onto the coals and flare, steam keeps rising from the meat"
+        rationale: "炭火热源 + 食物热传导 + 油滴遇火，覆盖发光/对流/梯度多维度"
+      - id: PHY-R07-003
+        t2v_prompt: "a candle in a draft-free room, the flame steady, the wax near the wick softening, macro close-up"
+        t2i_prompt: "a lit candle in a still room, steady flame, macro close-up"
+        i2v_prompt: "the candle burns on, the wax near the wick slowly melts and the flame flickers minimally"
+        rationale: "无风蜡烛检验发光颜色稳定与火焰方向一致（对流向上）"
+
+  # ───────────────────────── 第二类：物体-空间关系 ─────────────────────────
+  R08:
+    name: 多视图几何一致性
+    module: multiview
+    applicable: [CI2V]   # T2V/I2V 仅 prompt 代理（环绕镜头），CI2V 用仿真同步多视图
+    prompts:
+      - id: PHY-R08-001
+        t2v_prompt: "the camera slowly circles a detailed marble statue of a horse on a pedestal for one full loop, the statue stays still, neutral studio light"
+        rationale: "环绕镜头让同一几何被多视角观测；CI2V 应改为同时从 3+ 固定机位导出同步帧"
+      - id: PHY-R08-002
+        t2v_prompt: "a cube, a sphere and a cone arranged on a table, the camera orbits them once, the objects remain fixed"
+        rationale: "简单几何体环绕，便于 CI2V 多视图重投影误差检验"
+
+  R09:
+    name: 相对尺度
+    module: scale_pose
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R09-001
+        t2v_prompt: "a red ball rolling from the far end of a long corridor straight toward the camera, the corridor has evenly spaced floor tiles, fixed camera at the near end"
+        t2i_prompt: "a red ball at the far end of a long corridor with evenly spaced floor tiles, fixed camera at the near end"
+        i2v_prompt: "the ball rolls straight toward the camera along the corridor until it is close to the lens"
+        rationale: "由远及近提供连续画面内尺寸变化，地板瓷砖给出距离参照，检验跨帧 bbox 尺寸 CV。注意prompt 不得写「变大」——那正是 R09 的判据"
+      - id: PHY-R09-002
+        t2v_prompt: "a helium balloon released from a hand at ground level rising into a clear blue sky, no wind, fixed wide camera"
+        t2i_prompt: "a helium balloon held in a hand at ground level, clear blue sky behind, fixed wide camera"
+        i2v_prompt: "the hand opens and the balloon rises into the sky until it is a small dot"
+        rationale: "上升过程画面内尺寸单调递减，检验相对尺度随时间的一致性"
+      - id: PHY-R09-003
+        t2v_prompt: "two identical toy cars, one near the camera and one far, both driving away from the camera at the same speed along parallel lanes, sidewalk view"
+        t2i_prompt: "two identical toy cars, one near and one far, both at the start of parallel lanes, sidewalk view"
+        i2v_prompt: "both cars drive away from the camera at the same speed along their lanes"
+        rationale: "同物体不同距离应始终保持相同相对大小比例，检验比例不自相矛盾"
+
+  R10:
+    name: 三维位姿
+    module: scale_pose
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R10-001
+        t2v_prompt: "a cube sitting on a table, the camera moves to one side and then rotates to look at the cube from a new angle, the cube does not move"
+        t2i_prompt: "a cube sitting on a table, camera facing its front face"
+        i2v_prompt: "the camera glides to the right and then arcs to view the cube from a 45-degree angle"
+        rationale: "静止立方体 + 相机运动，检验物体 6D 位姿估计与 ATE/RPE"
+      - id: PHY-R10-002
+        t2v_prompt: "a drone with LED lights flies a circular path at constant altitude in an empty warehouse, the floor has a painted circle and radial lines, fixed camera at the circle center looking up"
+        t2i_prompt: "a drone with LED lights hovering at one point of a painted circle on a warehouse floor, fixed camera at center looking up"
+        i2v_prompt: "the drone flies steadily along the circular path at constant altitude, completing the loop"
+        rationale: "无人机绕圆飞行，极坐标网格提供空间参考，检验位姿轨迹精度"
+
+  R11:
+    name: 空间关系
+    module: deformation_spatial
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R11-001
+        t2v_prompt: "a small red cube placed on top of a larger blue cube, then a yellow cube placed on top of the red one, building a three-cube vertical tower, side view"
+        t2i_prompt: "a blue cube on a table, a red cube beside it, side view"
+        i2v_prompt: "a hand stacks the red cube onto the blue cube, then the yellow cube onto the red cube, forming a tower"
+        rationale: "三色立方体堆叠给出清晰层级(下蓝/中红/上黄)与支撑/接触空间关系"
+      - id: PHY-R11-002
+        t2v_prompt: "a toy train engine pulling three carriages along a circular track, the engine passes in front of a small station building and then behind it, side view from outside the track"
+        t2i_prompt: "a toy train engine at the near side of a circular track with a station building, three carriages behind it, side view"
+        i2v_prompt: "the train moves along the track, the engine goes in front of and then behind the station building as it circles"
+        rationale: "火车绕圈提供遮挡/显现的空间序贯关系，检验深度前后序与合法遮挡"
+      - id: PHY-R11-003
+        t2v_prompt: "a green apple resting on a plate, a clear drinking glass standing next to the plate, both on a table, the camera looks from a low angle so the glass partially overlaps the apple"
+        t2i_prompt: "a green apple on a plate and a clear glass next to it on a table, low camera angle"
+        i2v_prompt: "the apple is nudged a little so it rolls until it touches the base of the glass, then stops"
+        rationale: "低角度使玻璃与苹果重叠，检验接触/遮挡的 3D 穿透与深度序"
+
+  R12:
+    name: 稳定性
+    module: statics_lighting
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R12-001
+        t2v_prompt: "a tower of fifteen wooden blocks stacked in alternating layers of three on a sturdy table, no one touching it, no wind, static camera, steady ceiling light"
+        t2i_prompt: "a tower of fifteen wooden blocks stacked in alternating layers of three on a sturdy table, steady ceiling light"
+        i2v_prompt: "the camera holds still for five seconds with nobody touching the table"
+        rationale: "15 层积木塔重心高基底窄，是敏感静力学场景。prompt 不得写「保持原样」——塔倒不倒正是 R12 的判据"
+      - id: PHY-R12-002
+        t2v_prompt: "a ceramic plate, a water glass, a metal fork, a napkin and a salt shaker already on a dinner table, a hand reaches in and sets a bowl of soup onto the empty place, static camera"
+        t2i_prompt: "a dinner table already set with a plate, a glass, a fork, a napkin and a salt shaker, empty place in the middle"
+        i2v_prompt: "a hand reaches in and places a bowl of soup onto the empty place, then withdraws; the other objects stay in place"
+        rationale: "多物体静态场景插入新物体，检验原有物体是否保持静止与支撑关系"
+
+  R13:
+    name: 光影空间一致性
+    module: statics_lighting
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R13-001
+        t2v_prompt: "a single desk lamp as the only light in a dark room, illuminating a white sphere, a white cube and a white cylinder on a matte desk from the left, the lamp stays fixed"
+        t2i_prompt: "a dark room with one desk lamp on the left, a white sphere, a white cube and a white cylinder on a matte desk, unlit right side"
+        i2v_prompt: "the desk lamp stays switched on at its fixed position for five seconds while the camera holds still"
+        rationale: "单点光源 + 三白体消除颜色干扰，球体高光/立方体明暗面/圆柱曲面提供多方向法线探针。prompt 不得描述明暗面「与光源一致」——那正是 R13 的判据"
+      - id: PHY-R13-002
+        t2v_prompt: "five identical vertical poles in a straight line two meters apart, lit by the low afternoon sun from the left, each casting a shadow on flat ground, no clouds, wide front shot"
+        t2i_prompt: "five identical vertical poles in a straight line two meters apart on flat ground, low sun from the left, wide front shot"
+        i2v_prompt: "the scene is held for five seconds under the same afternoon sun, no clouds pass"
+        rationale: "等间距杆列 + 单一平行光源，检测整帧光源方向一致性。prompt 不得写阴影「方向长度一致」——那正是 R13 的判据"
+
+  R14:
+    name: 磁·电作用关系
+    module: electromag
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R14-001
+        t2v_prompt: "a red horseshoe magnet slowly lowered toward scattered silver paperclips on a wooden desk, the magnet then pulls away, overhead close-up"
+        t2i_prompt: "a red horseshoe magnet held above a scattered pile of silver paperclips on a wooden desk, overhead close-up"
+        i2v_prompt: "the magnet descends toward the paperclips, some cling to it, then it lifts away carrying them"
+        rationale: "马蹄磁铁 + 回形针是经典磁学演示，磁场梯度力与磁化级联可观测"
+      - id: PHY-R14-002
+        t2v_prompt: "a Van de Graaff generator with its metal dome accumulating charge, blue-white sparks jumping from the dome to a grounded wand held nearby, a person with long hair touching the dome, classroom"
+        t2i_prompt: "a Van de Graaff generator with its metal dome, a grounded wand held near it, a person with long hair beside it, classroom"
+        i2v_prompt: "the machine is switched on, sparks jump from the dome to the wand and the person's hair spreads outward"
+        rationale: "范德格拉夫起电机：火花(介质击穿) + 头发(电荷排斥)同时测试放电与静电场"
+
+  # ───────────────────────── 第三类：物体-时空动态 ─────────────────────────
+  R15:
+    name: 位移
+    module: kinematics
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R15-001
+        scene_type: sliding
+        t2v_prompt: "a white cue ball on a green billiard table rolling from one cushion to the opposite cushion, overhead top-down camera, textured felt visible"
+        t2i_prompt: "a white cue ball at rest on a green billiard table near one cushion, overhead top-down camera"
+        i2v_prompt: "the cue ball rolls straight across the table from one cushion to the opposite cushion"
+        rationale: "台球提供清晰位移，绿色呢绒纹理提供密集追踪点，俯拍消除透视畸变"
+      - id: PHY-R15-002
+        scene_type: pendulum
+        t2v_prompt: "a weighted rod swinging back and forth like a metronome against a plain background with angle marks behind it, the base fixed, side view"
+        t2i_prompt: "a weighted rod at rest at center against a plain background with angle marks, side view"
+        i2v_prompt: "the rod swings back and forth between the marked angles, the base staying fixed"
+        rationale: "节拍器单摆提供周期性位移，背景角度标记为像素级位置参考；轨迹应可被正弦拟合"
+      - id: PHY-R15-003
+        scene_type: sliding
+        t2v_prompt: "a drone flying in a straight line from the left edge to the right edge of the frame at constant height, outdoor park background, side tracking camera"
+        t2i_prompt: "a drone hovering at the left edge of the frame at constant height, outdoor park background"
+        i2v_prompt: "the drone flies straight across to the right edge at the same height"
+        rationale: "匀速直线飞行提供纯净平移位移轨迹，便于 Worldline L2 评测"
+      - id: PHY-R15-004
+        scene_type: projectile
+        t2v_prompt: "a small beanbag thrown horizontally off the edge of a table, flying out and down to the floor, side view with a grid of squares on the wall behind"
+        t2i_prompt: "a small beanbag held at the edge of a table, side view with a grid of squares on the wall behind"
+        i2v_prompt: "the beanbag is thrown horizontally off the table edge and travels out and down to the floor"
+        rationale: "水平抛出：表格明确点名的代理场景，竖直方向应二次、水平方向应一次"
+
+  R16:
+    name: 速度·加速度
+    module: kinematics
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R16-001
+        scene_type: incline
+        t2v_prompt: "a metal ball released from rest at the top of a smooth ramp tilted fifteen degrees, the ramp has tick marks every ten centimeters, the ball rolls down and leaves the end into the air, side view"
+        t2i_prompt: "a metal ball held at the top of a smooth fifteen-degree ramp with tick marks, side view"
+        i2v_prompt: "the ball is released and rolls down the ramp past the tick marks, then flies off the end"
+        rationale: "斜面运动 + 末段类抛体，刻度线提供位置-时间对，可测加速度一致性"
+      - id: PHY-R16-002
+        scene_type: unspecified
+        t2v_prompt: "a car starting from a stop at a red light on a straight flat road, then picking up speed and reaching a steady cruise, side view from the sidewalk, lamp posts thirty meters apart"
+        t2i_prompt: "a car stopped at a red light on a straight flat road, lamp posts thirty meters apart, side view"
+        i2v_prompt: "the light changes and the car accelerates away from the stop, then settles to a steady speed"
+        rationale: "静止→加速→匀速两段式，故不指定单一假设(scene_type=unspecified 由实测模式判定)"
+      - id: PHY-R16-003
+        scene_type: pendulum
+        t2v_prompt: "a pendulum bob released from one side, swinging back and forth, with angle marks behind it, side view"
+        t2i_prompt: "a pendulum bob held to one side with angle marks behind it, side view"
+        i2v_prompt: "the bob is released and swings freely back and forth through the bottom"
+        rationale: "单摆提供周期性速度变化(端点为零、过中点最大)，检验速度 CV 与加速度"
+      - id: PHY-R16-004
+        scene_type: free_fall
+        t2v_prompt: "a bowling ball released from a third-floor balcony falling to the ground, side view with the floor edges of the building visible as height references"
+        t2i_prompt: "a bowling ball held over a third-floor balcony railing, side view with building floor edges visible"
+        i2v_prompt: "the ball is released over the railing and travels down to the ground"
+        rationale: "纯自由落体：加速度应恒定，楼层边缘提供等距高度参考，检验匀加速一致性"
+
+  R17:
+    name: 角速度
+    module: kinematics
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R17-001
+        scene_type: circular
+        t2v_prompt: "a ceiling fan with three blades viewed from directly below, a colored sticker on one blade tip, the fan running, plain white ceiling"
+        t2i_prompt: "a ceiling fan with three blades and a colored sticker on one blade tip, viewed from directly below, plain white ceiling"
+        i2v_prompt: "the fan is switched on and spins, the marked blade circling the center, viewed from directly below"
+        rationale: "吊扇旋转 + 标记点提供角位置，正下方视角消除透视。prompt 不得写「匀速」——ω 是否恒定正是 R17 的判据"
+      - id: PHY-R17-002
+        scene_type: rolling
+        t2v_prompt: "a bicycle wheel on a horizontal axle stand given a hard push and then spinning freely, thirty-six evenly spaced spokes, side view held for the whole shot"
+        t2i_prompt: "a bicycle wheel on a horizontal axle stand, stationary, thirty-six evenly spaced spokes, side view"
+        i2v_prompt: "a hand gives the wheel one hard push and lets go, the wheel spins on the stand for the rest of the shot"
+        rationale: "车轮自由旋转，36 辐条提供天然角度标记。不写「逐渐减速停止」，衰减规律交由评测器判定"
+
+  R18:
+    name: 光影时间一致性
+    module: statics_lighting
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R18-001
+        t2v_prompt: "a still life of three fruit, a vase and a draped cloth on a wooden table, lit by one studio light from the upper left, no camera movement, five-second continuous shot"
+        t2i_prompt: "a still life of three fruit, a vase and a draped cloth on a wooden table, one studio light from the upper left"
+        i2v_prompt: "the camera holds still for five seconds with the studio light left switched on and unmoved"
+        rationale: "静物 + 固定光源，水果高光与布料褶皱明暗作为光源方向探针。prompt 不得写高光阴影「保持不变」——那正是 R18 的判据"
+      - id: PHY-R18-002
+        scene_type: unspecified
+        t2v_prompt: "a candle burning in a draft-free room, holder and table visible, close-up macro, the candle burns for the full clip"
+        t2i_prompt: "a lit candle in a still room, holder and table visible, close-up macro"
+        i2v_prompt: "the candle goes on burning in the draft-free room for the whole shot"
+        rationale: "无风蜡烛是敏感时域光照稳定性测试。prompt 不得写外观「稳定」——那正是 R18 的判据"
+
+  R19:
+    name: 跨帧几何一致性
+    module: motion_persistence
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R19-001
+        t2v_prompt: "a slow steady dolly-in through a straight corridor with identical columns on both sides at regular intervals, camera advancing about 0.3 meters per second"
+        t2i_prompt: "a corridor with identical columns on both sides at regular intervals, camera at the near end"
+        i2v_prompt: "the camera moves forward through the corridor at a slow steady pace"
+        rationale: "柱廊推轨使深度结构持续平滑变化，相邻帧几何应连续，检验点云漂移+光流"
+      - id: PHY-R19-002
+        t2v_prompt: "a 360-degree orbital camera circling a white marble horse statue on a pedestal, one full orbit in twelve seconds, detailed anatomy, neutral studio light"
+        t2i_prompt: "a white marble horse statue on a pedestal, neutral studio light, camera at one side"
+        i2v_prompt: "the camera circles the statue one full turn at steady speed"
+        rationale: "雕像环绕：轨道镜头视角差小，可检测跨帧几何一致性"
+
+  R20:
+    name: 运动连续性
+    module: motion_persistence
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R20-001
+        t2v_prompt: "a figure skater gliding across an ice rink performing a long continuous spiral for at least eight seconds, tracing a large figure-eight, wide shot from the stands"
+        t2i_prompt: "a figure skater at the start of a large ice rink, wide shot from the stands"
+        i2v_prompt: "the skater glides in one continuous figure-eight spiral across the ice for over eight seconds"
+        rationale: "长时程连续曲线运动，冰刀划痕提供轨迹参考，检验无跳帧/瞬移"
+      - id: PHY-R20-002
+        t2v_prompt: "a koi fish swimming in a continuous loop in a clear pond, making a figure-eight with its body and tail undulating, bubbles rising from its gills, viewed from above through clear water"
+        t2i_prompt: "a koi fish at rest near the bottom of a clear pond, viewed from above"
+        i2v_prompt: "the koi swims in one continuous figure-eight loop, body and tail undulating, bubbles rising"
+        rationale: "鱼类波动推进产生从头到尾体态波，时空连续性极强，检验 jerk 与插帧"
+
+  R21:
+    name: 物体恒存
+    module: motion_persistence
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R21-001
+        t2v_prompt: "a yellow tennis ball rolling from left to right across a room, its path passing behind a large brown sofa placed in the middle, wide static camera held for the whole shot"
+        t2i_prompt: "a yellow tennis ball at the left side of a room with a large brown sofa in the middle, wide static camera"
+        i2v_prompt: "the ball rolls to the right and its path takes it behind the large sofa, the camera keeps filming the whole room"
+        rationale: "球过沙发：经典物体恒存(遮挡-重现)测试。prompt 只描述「路径经过沙发后方」，绝不能写「然后重新出现」——重现与否正是 R21 的判据"
+      - id: PHY-R21-002
+        t2v_prompt: "a person walking along a forest path, their route passing behind a thick oak trunk, side-tracking camera following the walk"
+        t2i_prompt: "a person at one side of a thick oak trunk on a forest path, side-tracking camera"
+        i2v_prompt: "the person keeps walking along the path, their route taking them behind the thick oak trunk"
+        rationale: "人过树干：复杂目标遮挡后重现，检验 SAM3 追踪 ID 不跳变。同样不透露「另一侧继续出现」"
+
+  R22:
+    name: 力的动态效应
+    module: dynamics
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R22-001
+        scene_type: sliding
+        t2v_prompt: "a hand pushes a heavy cardboard box across a smooth wooden floor, the box starts from rest, the hand pushes then lets go, side view at floor level"
+        t2i_prompt: "a heavy cardboard box at rest on a smooth wooden floor, a hand beside it, side view at floor level"
+        i2v_prompt: "the hand pushes the box so it slides, then releases it and the box keeps moving and slows"
+        rationale: "推箱子：推力→释放，力→加速度因果链可从运动学反推，不写「应匀速减速」"
+      - id: PHY-R22-002
+        scene_type: projectile
+        t2v_prompt: "a spring-loaded toy cannon, a hand compresses the spring then releases the trigger launching a foam ball upward, the ball rises and falls back, side view, slow motion"
+        t2i_prompt: "a spring-loaded toy cannon with a foam ball seated, a hand on the spring, side view"
+        i2v_prompt: "the hand compresses the spring, releases the trigger, the ball launches upward, rises and falls back down"
+        rationale: "弹簧炮：弹性回复力→弹射→重力抛物，力源与方向明确"
+      - id: PHY-R22-003
+        scene_type: bounce
+        t2v_prompt: "a ball dropped from a height, falling straight down and bouncing on the floor, side view with a vertical measuring stick beside the bounce zone"
+        t2i_prompt: "a ball held at a height above a floor, a vertical measuring stick beside the bounce zone, side view"
+        i2v_prompt: "the ball is released, falls and bounces on the floor, then bounces again"
+        rationale: "自由落体+弹跳：重力向下加速度恒定、弹跳高度逐次衰减均可检验"
+      - id: PHY-R22-004
+        scene_type: incline
+        t2v_prompt: "a wooden block released at the top of a plank tilted about twenty degrees, the block slides down the whole length, tick marks every ten centimeters along the plank, side view"
+        t2i_prompt: "a wooden block held at the top of a plank tilted about twenty degrees with tick marks along it, side view"
+        i2v_prompt: "the block is released and travels down the tilted plank past the tick marks to the bottom"
+        rationale: "斜面下滑：a_斜/a_落 = sinθ−μcosθ 可反解 μ 并检验 ∈[0,1]（表格 ④）"
+      - id: PHY-R22-005
+        scene_type: circular
+        t2v_prompt: "a small ball on a string swung in a horizontal circle above a table, the string is let go mid-swing and the ball departs, top-down view with a painted circle on the table"
+        t2i_prompt: "a small ball on a string held at one point of a horizontal circle above a table, top-down view with a painted circle"
+        i2v_prompt: "the ball is swung around the circle and then the string is released mid-swing, the ball leaves the circle"
+        rationale: "圆周运动松手：检验是否沿切线飞出而非径向甩出（表格 ⑧）"
+      - id: PHY-R22-006
+        scene_type: free_fall
+        t2v_prompt: "a steel ball and a plastic ball of the same diameter released at the same instant from the same height in a tall indoor hall, side view with a vertical scale behind them"
+        t2i_prompt: "a steel ball and a plastic ball of the same diameter held at the same height, vertical scale behind them, side view"
+        i2v_prompt: "both balls are released at the same instant and travel down past the scale to the floor"
+        rationale: "同尺寸不同材质同时释放：检验伽利略等效性（表格 ②，同重力场应同速）"
+
+  R23:
+    name: 动量守恒
+    module: dynamics
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R23-001
+        scene_type: collision
+        t2v_prompt: "a Newton's cradle with five identical steel balls, the left ball pulled back and released to strike the row, front view, slow motion"
+        t2i_prompt: "a Newton's cradle with five identical steel balls at rest, the left ball pulled back, front view"
+        i2v_prompt: "the left ball is released and swings down to strike the row of stationary balls"
+        rationale: "牛顿摆：等质量弹性碰撞，动量传递经典演示，可检验质量比/恢复系数"
+      - id: PHY-R23-002
+        scene_type: collision
+        t2v_prompt: "two identical pucks slide toward each other from opposite ends of an air table and collide at the center, top-down overhead view"
+        t2i_prompt: "two identical pucks at opposite ends of an air table, top-down overhead view"
+        i2v_prompt: "both pucks slide toward each other and meet in a head-on collision at the center"
+        rationale: "对心正碰(等质量等速反向)，低摩擦气垫确保平动动能纯净"
+      - id: PHY-R23-003
+        scene_type: collision
+        t2v_prompt: "a large heavy marble rolls into a small light marble at rest on a flat grooved track, they collide and both move on, side view at track level"
+        t2i_prompt: "a large heavy marble at one end of a flat grooved track and a small light marble at rest in the middle, side view"
+        i2v_prompt: "the large marble rolls along the groove into the small one and both continue moving after contact"
+        rationale: "不等质量碰撞：Σmᵢvᵢ反解质量比才有非平凡解，检验质量比与e 的自洽"
+
+  R24:
+    name: 能量守恒
+    module: dynamics
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R24-001
+        scene_type: pendulum
+        t2v_prompt: "a heavy brass bob on a thin string from a fixed point, pulled to the side and released, swinging freely back and forth, side view with angle marks, several full cycles"
+        t2i_prompt: "a brass bob held to the side on a string from a fixed point, angle marks behind it, side view"
+        i2v_prompt: "the bob is released and swings freely back and forth through several full cycles"
+        rationale: "单摆：势能↔动能周期转换，多周期提供统计显著性，检验机械能不自发上升"
+      - id: PHY-R24-002
+        scene_type: bounce
+        t2v_prompt: "a tennis ball dropped from a fixed height onto a hard concrete floor, side view with a measuring stick showing height marks, slow motion capturing the bounce sequence"
+        t2i_prompt: "a tennis ball held at a fixed height above a concrete floor, measuring stick beside it, side view"
+        i2v_prompt: "the ball is released onto the concrete floor and keeps bouncing until the shot ends"
+        rationale: "弹跳序列：每次碰撞能量损失。prompt 不得写「每次更低」——逐次高度是否递减正是 R24 的判据"
+      - id: PHY-R24-003
+        scene_type: incline
+        t2v_prompt: "a marble released at the top of a curved ramp that dips down and rises again into a second slope, side view with height marks on both slopes"
+        t2i_prompt: "a marble held at the top of a curved ramp that dips down and rises into a second slope, height marks on both slopes, side view"
+        i2v_prompt: "the marble is released, runs down the dip and climbs the second slope, then returns"
+        rationale: "势能→动能→势能往复：末端上升高度不应超过初始高度（表格「不能自发上升」）"
+
+  R25:
+    name: 相变
+    module: phase_change
+    applicable: [T2V, I2V, CI2V]
+    prompts:
+      - id: PHY-R25-001
+        t2v_prompt: "a clear ice cube on a warm dark stone counter at room temperature, macro close-up, continuous shot showing the cube over time"
+        t2i_prompt: "a clear ice cube sitting on a warm dark stone counter, macro close-up"
+        i2v_prompt: "the ice cube sits on the warm counter and gradually changes over the continuous shot"
+        rationale: "冰融化(固→液)：关键信号为体积变化/水滴流动/固液界面"
+      - id: PHY-R25-002
+        t2v_prompt: "a block of dark chocolate heated in a glass bowl over simmering water, a spoon occasionally stirring, close-up side view"
+        t2i_prompt: "a block of dark chocolate in a glass bowl over simmering water, close-up side view"
+        i2v_prompt: "the chocolate is heated and stirred, its form changes over the shot"
+        rationale: "巧克力融化(固→液)：非纯物质相变，导热从接触壁向中心，方向性可检验"
+      - id: PHY-R25-003
+        t2v_prompt: "a pot of water on a stove reaching a boil, bubbles rising and steam leaving the surface, side view from the pot rim"
+        t2i_prompt: "a pot of still water on a stove, side view from the rim"
+        i2v_prompt: "the stove heats the pot, bubbles form at the bottom and rise, steam leaves the surface"
+        rationale: "水沸腾(液→气)：气泡上浮 + 蒸汽方向，检验相变方向/速率合理性"

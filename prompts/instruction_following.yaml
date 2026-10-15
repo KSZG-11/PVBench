@@ -1,0 +1,170 @@
+# 指令遵循 标准化 Prompt 测试集
+# 涵盖 7 个维度，每维度 5-8 条 prompt，含 contraster 对
+
+prompts:
+  # ── IF-1: 主体遵循 ──
+  - id: IF1-001
+    text: "a red car driving on a mountain road"
+    dimensions: [IF-1, IF-3]
+    contraster: "a blue motorcycle"
+
+  - id: IF1-002
+    text: "a white cat sleeping on a windowsill"
+    dimensions: [IF-1, IF-3]
+    contraster: "a black dog"
+
+  - id: IF1-003
+    text: "a vintage steam train crossing a bridge"
+    dimensions: [IF-1, IF-3]
+    contraster: "a modern bullet train"
+
+  - id: IF1-004
+    text: "a golden retriever catching a frisbee in a park"
+    dimensions: [IF-1, IF-3]
+    contraster: "a cat"
+
+  - id: IF1-005
+    text: "a glass of water on a wooden table"
+    dimensions: [IF-1, IF-2]
+    contraster: "a plastic cup"
+
+  # ── IF-2: 属性遵循 (颜色/材质/数量/大小) ──
+  - id: IF2-001
+    text: "three red balloons floating up into a blue sky"
+    dimensions: [IF-2]
+    contraster: "one green balloon"
+
+  - id: IF2-002
+    text: "a large marble statue in a garden"
+    dimensions: [IF-2]
+    contraster: "a small wooden figurine"
+
+  - id: IF2-003
+    text: "five yellow rubber ducks on a pond"
+    dimensions: [IF-2]
+    contraster: "three white swans"
+
+  - id: IF2-004
+    text: "a tiny porcelain teacup with gold trim"
+    dimensions: [IF-2]
+    contraster: "a large ceramic mug"
+
+  - id: IF2-005
+    text: "a shiny chrome sphere reflecting the room"
+    dimensions: [IF-2]
+    contraster: "a matte gray ball"
+
+  - id: IF2-006
+    text: "a translucent blue jellyfish swimming"
+    dimensions: [IF-2]
+    contraster: "a solid rubber toy"
+
+  # ── IF-3: 动作遵循 ──
+  - id: IF3-001
+    text: "a person pouring coffee from a pot into a cup"
+    dimensions: [IF-3]
+    contraster: "a cup already full of coffee"
+
+  - id: IF3-002
+    text: "leaves falling from a tree in autumn wind"
+    dimensions: [IF-3, IF-6]
+    contraster: "leaves staying on the tree"
+
+  - id: IF3-003
+    text: "a dog running and jumping over a fence"
+    dimensions: [IF-3]
+    contraster: "a dog walking around the fence"
+
+  - id: IF3-004
+    text: "a chef flipping a pancake in a pan"
+    dimensions: [IF-3]
+    contraster: "a pancake sitting in the pan"
+
+  - id: IF3-005
+    text: "waves crashing against rocks on a shore"
+    dimensions: [IF-3]
+    contraster: "calm water near rocks"
+
+  # ── IF-4: 空间关系遵循 ──
+  - id: IF4-001
+    text: "a cat sitting under a table, with a vase on the table"
+    dimensions: [IF-4]
+    contraster: "a cat on the table"
+
+  - id: IF4-002
+    text: "a bird flying above the clouds"
+    dimensions: [IF-4]
+    contraster: "a bird below the clouds"
+
+  - id: IF4-003
+    text: "a book placed between two candles on a desk"
+    dimensions: [IF-4]
+    contraster: "a book next to one candle"
+
+  - id: IF4-004
+    text: "a painting hanging on the wall behind a sofa"
+    dimensions: [IF-4]
+    contraster: "a painting in front of a sofa"
+
+  - id: IF4-005
+    text: "a small box inside a larger cardboard box"
+    dimensions: [IF-4]
+    contraster: "a box next to another box"
+
+  # ── IF-5: 风格遵循 ──
+  - id: IF5-001
+    text: "a forest landscape in Chinese ink wash painting style"
+    dimensions: [IF-5]
+    contraster: "a photorealistic forest"
+
+  - id: IF5-002
+    text: "a busy city street in pixel art style"
+    dimensions: [IF-5]
+    contraster: "a realistic city street"
+
+  - id: IF5-003
+    text: "an ocean sunset in oil painting style with visible brushstrokes"
+    dimensions: [IF-5]
+    contraster: "a realistic ocean sunset photo"
+
+  - id: IF5-004
+    text: "a robot in cyberpunk anime style"
+    dimensions: [IF-5]
+    contraster: "a realistic robot render"
+
+  # ── IF-6: 时序遵循 ──
+  - id: IF6-001
+    text: "first a match is struck, then it lights a candle"
+    dimensions: [IF-6]
+    contraster: "a candle lighting itself before the match is struck"
+
+  - id: IF6-002
+    text: "an ice cube melting into water, then the water evaporating"
+    dimensions: [IF-6]
+    contraster: "water appearing before ice melts"
+
+  - id: IF6-003
+    text: "a seed sprouting, then growing into a flower"
+    dimensions: [IF-6]
+    contraster: "a flower appearing, then turning into a seed"
+
+  # ── IF-7: 否定遵循 ──
+  - id: IF7-001
+    text: "a room with furniture but no people"
+    dimensions: [IF-7]
+    contraster: "a room with people"
+
+  - id: IF7-002
+    text: "a glass falling but not shattering"
+    dimensions: [IF-7]
+    contraster: "a glass shattering"
+
+  - id: IF7-003
+    text: "a car without wheels floating above the ground"
+    dimensions: [IF-7, IF-4]
+    contraster: "a normal car with wheels"
+
+  - id: IF7-004
+    text: "a sky full of stars but no moon"
+    dimensions: [IF-7]
+    contraster: "a sky with a bright moon"
