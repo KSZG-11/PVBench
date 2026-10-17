@@ -1,13 +1,13 @@
 <div align="center">
 
-<h1>PVBench: Quantifying Physical Plausibility in Video Generation<br />with Object-Level Physical Measurements</h1>
+<h1>PVBench: Quantifying Physical Plausibility in Video Generation with Object-Level Physical Measurements</h1>
 
 <p>
   <strong>Kaiwei Chen<sup>1</sup></strong> ·
   <strong>Moran Li<sup>2</sup></strong> ·
   <strong>Zhenye Gan<sup>3</sup></strong> ·
   <strong>Yabiao Wang<sup>3</sup></strong> ·
-  <strong>Chengjie Wang<sup>3</sup></strong> ·
+  <strong>Chengjie Wang<sup>3</sup></strong><br />
   <strong>Kexin Zhang<sup>3</sup></strong> ·
   <strong>Yong Liu<sup>1</sup></strong> ·
   <strong>Jiangning Zhang<sup>1</sup></strong>
