@@ -6,8 +6,8 @@
   <strong>Kaiwei Chen<sup>1</sup></strong> ·
   <strong>Moran Li<sup>2</sup></strong> ·
   <strong>Zhenye Gan<sup>3</sup></strong> ·
-  <strong>Yabiao Wang<sup>3</sup></strong> ·
-  <strong>Chengjie Wang<sup>3</sup></strong><br />
+  <strong>Yabiao Wang<sup>3</sup></strong><br />
+  <strong>Chengjie Wang<sup>3</sup></strong> ·
   <strong>Kexin Zhang<sup>3</sup></strong> ·
   <strong>Yong Liu<sup>1</sup></strong> ·
   <strong>Jiangning Zhang<sup>1</sup></strong>
