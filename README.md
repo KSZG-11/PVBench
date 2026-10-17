@@ -1,8 +1,6 @@
 <div align="center">
 
-# PVBench
-
-### Quantifying Physical Plausibility in Video Generation with Object-Level Physical Measurements
+<h1>PVBench: Quantifying Physical Plausibility in Video Generation<br />with Object-Level Physical Measurements</h1>
 
 <p>
   <strong>Kaiwei Chen<sup>1</sup></strong> ·
@@ -22,7 +20,7 @@
 </p>
 
 <p>
-  <a href="https://github.com/KSZG-11/PVBench"><img src="https://img.shields.io/badge/Code-GitHub-181717?style=flat&logo=github" alt="Code"></a>
+  <img src="https://img.shields.io/badge/arXiv-PDF%20coming%20soon-b31b1b?style=flat&logo=arxiv&logoColor=white" alt="arXiv PDF coming soon">
   <a href="https://kszg-11.github.io/PVBench-Website/"><img src="https://img.shields.io/badge/Project-Website-2ea44f?style=flat&logo=googlechrome&logoColor=white" alt="Project website"></a>
   <a href="mailto:12632067@zju.edu.cn"><img src="https://img.shields.io/badge/Contact-12632067%40zju.edu.cn-4c8bf5?style=flat&logo=minutemailer&logoColor=white" alt="Contact"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
@@ -30,15 +28,16 @@
 
 </div>
 
-<div align="center">
-  <img src="assets/overview.png" width="96%" alt="PVBench evaluation taxonomy overview">
-</div>
 
 ## :sparkles: Overview
 
 PVBench is a benchmark and evaluation toolkit for measuring whether generated videos preserve the physical structure of the world. Instead of asking only whether a video looks realistic, PVBench evaluates **observable object-level physical states** and checks them with specialized vision models, physical quantities, physical laws, and MLLM judgments.
 
 PVBench organizes **46 evaluation dimensions** into **7 domains** and **3 assessment layers**. The physical layer contains **25 dimensions** covering object-intrinsic properties, object--space relations, and object dynamics across space and time. The benchmark supports matched **text-to-video (T2V)** and **image-to-video (I2V)** evaluation.
+
+<div align="center">
+  <img src="assets/overview.png" width="96%" alt="PVBench evaluation taxonomy overview">
+</div>
 
 > **Release note.** This repository contains first-party evaluation code and portable configuration examples. The full prompt set, reference images, generated videos, model weights, and third-party source trees are not bundled. Public release remains subject to the project patent filing and final rights review.
 
