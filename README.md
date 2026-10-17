@@ -1,50 +1,116 @@
+<div align="center">
+
 # PVBench
 
-PVBench is a physical-plausibility benchmark and evaluation toolkit for generated videos. It measures whether generated objects preserve **observable physical states**—not only whether a video looks realistic.
+### Quantifying Physical Plausibility in Video Generation with Object-Level Physical Measurements
 
-The benchmark organizes **46 evaluation dimensions** into **7 domains** and **3 layers**. The physical layer contains **25 dimensions** covering object-intrinsic properties, object–space relations, and object dynamics across space and time. PVBench supports both **text-to-video (T2V)** and **image-to-video (I2V)** evaluation with matched prompt groups.
+<p>
+  <strong>Kaiwei Chen<sup>1</sup></strong> ·
+  <strong>Moran Li<sup>2</sup></strong> ·
+  <strong>Zhenye Gan<sup>3</sup></strong> ·
+  <strong>Yabiao Wang<sup>3</sup></strong> ·
+  <strong>Chengjie Wang<sup>3</sup></strong> ·
+  <strong>Kexin Zhang<sup>3</sup></strong> ·
+  <strong>Yong Liu<sup>1</sup></strong> ·
+  <strong>Jiangning Zhang<sup>1</sup></strong>
+</p>
 
-> **Release note.** This repository contains first-party evaluation code and small configuration examples. The full benchmark prompt set, reference images, generated videos, model weights, and third-party source trees are not bundled. Public release remains subject to the project patent filing and final rights review.
+<p>
+  <sup>1</sup>Zhejiang University &nbsp;&nbsp;
+  <sup>2</sup>ByteDance &nbsp;&nbsp;
+  <sup>3</sup>Tencent
+</p>
 
-## Authors
+<p>
+  <a href="https://github.com/KSZG-11/PVBench"><img src="https://img.shields.io/badge/Code-GitHub-181717?style=flat&logo=github" alt="Code"></a>
+  <a href="https://kszg-11.github.io/PVBench-Website/"><img src="https://img.shields.io/badge/Project-Website-2ea44f?style=flat&logo=googlechrome&logoColor=white" alt="Project website"></a>
+  <a href="mailto:12632067@zju.edu.cn"><img src="https://img.shields.io/badge/Contact-12632067%40zju.edu.cn-4c8bf5?style=flat&logo=minutemailer&logoColor=white" alt="Contact"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
+</p>
 
-Kaiwei Chen, Moran Li, Zhenye Gan, Yabiao Wang, Chengjie Wang, Kexin Zhang, Yong Liu, and Jiangning Zhang.
+</div>
 
-Zhejiang University · ByteDance · Tencent
+<div align="center">
+  <img src="assets/overview.png" width="96%" alt="PVBench evaluation taxonomy overview">
+</div>
 
-## What is evaluated?
+## :sparkles: Overview
 
-- **Semantic layer — 14 dimensions:** condition and semantic fidelity, behavioral/causal/commonsense consistency.
-- **Perceptual layer — 7 dimensions:** perceptual and temporal quality, including subject consistency, aesthetics, motion smoothness, flicker, dynamics, background, and imaging quality.
-- **Physical layer — 25 dimensions:** geometric and spatial consistency; material properties and field states; kinematics and spatiotemporal persistence; mechanical plausibility and conservation laws.
+PVBench is a benchmark and evaluation toolkit for measuring whether generated videos preserve the physical structure of the world. Instead of asking only whether a video looks realistic, PVBench evaluates **observable object-level physical states** and checks them with specialized vision models, physical quantities, physical laws, and MLLM judgments.
 
-PVBench uses three evaluation paradigms:
+PVBench organizes **46 evaluation dimensions** into **7 domains** and **3 assessment layers**. The physical layer contains **25 dimensions** covering object-intrinsic properties, object--space relations, and object dynamics across space and time. The benchmark supports matched **text-to-video (T2V)** and **image-to-video (I2V)** evaluation.
 
-1. specialized-model quantitative evaluation;
-2. specialized-model measurement with MLLM judgment;
-3. pure MLLM semantic scoring.
+> **Release note.** This repository contains first-party evaluation code and portable configuration examples. The full prompt set, reference images, generated videos, model weights, and third-party source trees are not bundled. Public release remains subject to the project patent filing and final rights review.
 
-Among the 25 physical dimensions, 17 are evaluated numerically, 4 use hybrid measurement plus MLLM judgment, and 4 use pure MLLM scoring. The current configuration uses **Qwen3.8-27B** for the applicable MLLM evaluations.
+## :bookmark_tabs: Contents
 
-## Repository layout
+- [Highlights](#sparkles-highlights)
+- [Benchmark at a glance](#bar_chart-benchmark-at-a-glance)
+- [Data curation](#movie_camera-data-curation)
+- [Installation](#hammer_and_wrench-installation)
+- [Quick start](#rocket-quick-start)
+- [Input manifest](#page_facing_up-input-manifest)
+- [Repository layout](#file_folder-repository-layout)
+- [Reproducibility and data policy](#package-reproducibility-and-data-policy)
+- [Citation](#black_nib-citation)
+- [License](#scroll-license)
 
-```text
-PVBench_OpenSource_Core/
-├── evaluate.py                 # main single-video / video-directory entry point
-├── requirements.txt            # base Python dependencies
-├── LICENSE                     # MIT license for first-party PVBench source
-├── configs/config.example.yaml # copy to configs/config.yaml and edit local paths
-├── core/                       # evaluation pipelines, sampling, and reporting
-├── evaluators/                 # semantic, perceptual, and physical evaluators
-├── models/                     # adapters for optional specialist models
-├── scripts/                    # batch and specialized utility entry points
-├── examples/                   # portable manifest example
-└── tests/                      # lightweight release checks
-```
+<a name="highlights"></a>
 
-## Installation
+## :sparkles: Highlights
 
-Use a clean Python environment and install a CUDA-enabled PyTorch build that matches your driver before installing the remaining dependencies:
+1. **Systematic physical taxonomy.** 46 dimensions are grouped into 7 domains and 3 layers, including 25 physical dimensions.
+2. **Object-level physical measurements.** Specialized models extract quantities such as depth, metric scale, 6D pose, geometry, kinematics, and conservation-law residuals whenever the video makes them observable.
+3. **Matched T2V/I2V scenes.** Each prompt group defines a shared scene specification for text-to-video and image-to-video evaluation.
+4. **Hybrid evaluation protocol.** Quantitative measurement is combined with Qwen3.8-27B judgments for dimensions that cannot be reliably computed from pixels alone.
+5. **Source-level release.** The public package keeps the evaluator logic and examples lightweight while leaving private prompts, media, checkpoints, and generated outputs outside the repository.
+
+<a name="benchmark"></a>
+
+## :bar_chart: Benchmark at a glance
+
+| Layer | Coverage | What it measures |
+|:--|:--:|:--|
+| **Semantic** | 14 dimensions | Conditional and semantic fidelity; behavioral, causal, and commonsense consistency |
+| **Perceptual** | 7 dimensions | Subject consistency, aesthetics, motion smoothness, flicker, dynamics, background, and imaging quality |
+| **Physical** | 25 dimensions | Geometry and spatial consistency; material and field states; kinematics and persistence; mechanics and conservation |
+
+The 25 physical dimensions use three complementary paradigms:
+
+- **17** specialized-model quantitative evaluations;
+- **4** hybrid measurement + MLLM evaluations;
+- **4** pure MLLM evaluations.
+
+<a name="data-curation"></a>
+
+## :movie_camera: Data curation
+
+PVBench contains **600 prompt groups**, each with matched T2V and I2V variants. Prompts are designed around target evaluation dimensions, physically observable objects, controlled actions, and sufficient visual evidence. Approximately **30%** of the groups involve embodied agents such as robot arms, humanoids, quadrupeds, or multi-agent systems.
+
+<div align="center">
+  <img src="assets/pipeline.png" width="96%" alt="PVBench data curation and prompt generation pipeline">
+  <p><em>Data curation and prompt construction pipeline.</em></p>
+</div>
+
+<div align="center">
+  <img src="assets/prompt-distribution.png" width="96%" alt="PVBench prompt distribution statistics">
+  <p><em>Prompt distribution across domains, dimensions, lengths, and key vocabulary.</em></p>
+</div>
+
+<a name="results"></a>
+
+## :trophy: Paper results
+
+<div align="center">
+  <img src="assets/results.png" width="96%" alt="PVBench paper results for T2V and I2V models">
+  <p><em>Seven-domain scores and layer-level results reported in the paper.</em></p>
+</div>
+
+<a name="installation"></a>
+
+## :hammer_and_wrench: Installation
+
+Create a clean environment and install a CUDA-enabled PyTorch build that matches your driver before installing the remaining dependencies:
 
 ```bash
 python -m venv .venv
@@ -60,9 +126,11 @@ pip install -r requirements.txt
 
 The evaluator adapters are optional integrations. Some require additional packages, gated model access, local checkpoints, CUDA extensions, or separate upstream terms. They are intentionally not installed or redistributed by this repository.
 
-## Quick start
+<a name="quick-start"></a>
 
-Create a private local configuration and fill in model paths/checkpoints:
+## :rocket: Quick start
+
+Create a private local configuration and fill in model paths and checkpoints:
 
 ```bash
 cp configs/config.example.yaml configs/config.yaml
@@ -76,7 +144,7 @@ python evaluate.py \
   --config configs/config.yaml
 ```
 
-Evaluate all supported videos in a directory with the global semantic/perceptual pipeline:
+Evaluate a directory with the global semantic/perceptual pipeline:
 
 ```bash
 python evaluate.py \
@@ -84,16 +152,18 @@ python evaluate.py \
   --config configs/config.yaml
 ```
 
-For manifest-driven batch evaluation or mesh pre-generation, see the scripts in `scripts/`:
+For manifest-driven batch evaluation or mesh pre-generation:
 
 ```bash
 python scripts/run_batch.py --manifest /path/to/manifest.json --config configs/config.yaml
 python scripts/pregenerate_any6d_mesh.py --manifest /path/to/manifest.json --config configs/config.yaml
 ```
 
-These commands are source-level entry points. A clean installation still requires the relevant external model repositories, checkpoints, and hardware.
+These commands are source-level entry points. A complete evaluator run still requires the relevant external model repositories, checkpoints, and hardware.
 
-## Input manifest
+<a name="input-manifest"></a>
+
+## :page_facing_up: Input manifest
 
 See [`examples/manifest.example.jsonl`](examples/manifest.example.jsonl):
 
@@ -101,47 +171,66 @@ See [`examples/manifest.example.jsonl`](examples/manifest.example.jsonl):
 {"prompt_id":"demo-001","prompt":"A ball falls onto a table and bounces once.","video":"/path/to/video.mp4","modality":"T2V","dimensions":["R15","R16"]}
 ```
 
-For CI2V quantitative evaluation, provide independent simulation ground truth alongside the manifest. Model predictions must not be used as ground truth.
+For quantitative evaluation that uses simulation ground truth, provide independent ground truth alongside the manifest. Model predictions must not be used as ground truth.
 
-## Reproducibility and data policy
+<a name="layout"></a>
 
-The benchmark contains 600 prompt groups, each with T2V/I2V variants; 30% involve embodied-agent scenarios. The full prompt set, I2V reference images, generated videos, private manifests, and evaluation outputs are maintained separately from this source-only release. Do not commit credentials, private paths, checkpoints, videos, or reference media.
+## :file_folder: Repository layout
 
-Evaluation outputs are written to `results/`, which is ignored by Git. Pin model versions, weights, configuration, random seeds, and evaluator versions when reporting results.
+```text
+PVBench/
+├── evaluate.py                 # unified public entry point
+├── requirements.txt            # base Python dependencies
+├── configs/                    # portable configuration example
+├── core/                       # evaluation pipelines, sampling, and reporting
+├── evaluators/                 # semantic, perceptual, and physical evaluators
+├── models/                     # optional specialist-model adapters
+├── scripts/                    # batch and specialized utilities
+├── examples/                   # portable manifest example
+├── assets/                     # lightweight paper figures used by this README
+└── tests/                      # lightweight release checks
+```
 
-## Evaluation workflow
+<a name="reproducibility"></a>
 
-The public code separates the evaluation into three layers:
+## :package: Reproducibility and data policy
 
-- `core/pipeline_global.py`: semantic and perceptual evaluation (L1 + L2).
-- `core/pipeline_physics.py`: physical-layer evaluation (L3).
-- `core/pipeline_unified.py`: manifest-driven orchestration of all layers.
+The full prompt set, I2V reference images, generated videos, private manifests, and evaluation outputs are maintained separately from this source-only release. This repository does **not** include a separate data package. Do not commit credentials, private paths, checkpoints, videos, reference media, or generated results.
 
-The physical layer samples frames, invokes the configured specialist-model adapters, computes object-level quantities where possible, applies physical-law or threshold checks, and writes JSON/Markdown reports through `core/reporter.py`. Dimensions that cannot be measured reliably from pixels are evaluated with the configured MLLM path. Results are written under `results/` and are not included in the repository.
+For reproducible comparisons, record the model versions, checkpoint revisions, evaluator versions, configuration, random seeds, hardware, and any external prompt/media bundle used for the run.
 
-## Tests
+## :test_tube: Tests
 
 The lightweight release checks do not download weights or run GPU inference:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
-## Third-party components
 
-Optional integrations are obtained directly from their upstream projects and remain under their own licenses. This includes VGGT-Omega, SAM3, Any6D/FoundationPose, SpaTrackerV2, ReasonX, FlowSeek, StableNormal, VFIMamba, FineVQ, Depth Anything 3, and their checkpoints or CUDA extensions. Some have research-only, non-commercial, gated, or unresolved terms. Do not bundle or relicense them under PVBench.
+<a name="citation"></a>
 
-## Citation
+## :black_nib: Citation
 
-Use the final public paper metadata after the arXiv/conference record and persistent identifier are released.
+If PVBench is useful for your research, please consider citing the paper:
 
 ```bibtex
-@inproceedings{pvbench,
-  title  = {PVBench: Quantifying Physical Plausibility in Video Generation with Object-Level Physical Measurements},
-  author = {Chen, Kaiwei and Li, Moran and Gan, Zhenye and Wang, Yabiao and Wang, Chengjie and Zhang, Kexin and Liu, Yong and Zhang, Jiangning},
-  year   = {2027}
+@article{pvbench2026,
+  title   = {PVBench: Quantifying Physical Plausibility in Video Generation with Object-Level Physical Measurements},
+  author  = {Chen, Kaiwei and Li, Moran and Gan, Zhenye and Wang, Yabiao and Wang, Chengjie and Zhang, Kexin and Liu, Yong and Zhang, Jiangning},
+  year    = {2026}
 }
 ```
 
-## License
+For questions and correspondence: [12632067@zju.edu.cn](mailto:12632067@zju.edu.cn).
+
+<a name="license"></a>
+
+## :scroll: License
 
 First-party PVBench source is released under the [MIT License](LICENSE). This license does not cover optional third-party source code, model weights, datasets, prompts, reference images, or generated media.
+
+<div align="center">
+  <a href="https://github.com/KSZG-11/PVBench">Code</a> ·
+  <a href="https://kszg-11.github.io/PVBench-Website/">Project website</a> ·
+  <a href="mailto:12632067@zju.edu.cn">Contact</a>
+</div>
