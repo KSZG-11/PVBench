@@ -29,12 +29,12 @@ class ReleaseSmokeTests(unittest.TestCase):
         self.assertTrue(row["video"].startswith("/path/to/"))
         self.assertTrue(set(row["dimensions"]).issubset(DIMENSION_TO_CATEGORY))
 
-    def test_mit_license_and_deferred_public_release_are_explicit(self):
+    def test_mit_license_and_release_note_are_present(self):
         self.assertTrue((ROOT / "LICENSE").exists())
         self.assertIn("MIT License", (ROOT / "LICENSE").read_text(encoding="utf-8-sig"))
-        self.assertTrue((ROOT / "LICENSE_PENDING.md").exists())
-        checklist = (ROOT / "RELEASE_CHECKLIST.md").read_text(encoding="utf-8-sig")
-        self.assertIn("Not public-release ready yet", checklist)
+        readme = (ROOT / "README.md").read_text(encoding="utf-8-sig")
+        self.assertIn("patent", readme.lower())
+        self.assertIn("Qwen3.8-27B", readme)
 
 
 if __name__ == "__main__":

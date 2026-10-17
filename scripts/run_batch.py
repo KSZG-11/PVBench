@@ -23,7 +23,7 @@
     # 离线模式 (权重已下好, 不联网)
     HF_HUB_OFFLINE=1 python run_batch.py --manifest data/manifest.jsonl
 
-清单格式见 data/README.md。
+清单格式见根目录 README.md 的 Input manifest 部分。
 """
 import argparse
 import datetime
@@ -35,7 +35,10 @@ from typing import Optional
 
 import numpy as np
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CORE_DIR = os.path.join(PROJECT_ROOT, "core")
+sys.path.insert(0, PROJECT_ROOT)
+sys.path.insert(0, CORE_DIR)
 
 from pipeline_physics import PhysicsPipeline
 from models.loader import ModelLoader
@@ -47,7 +50,7 @@ MODULE_GROUPS = {
     # 几何重建类: VGGT-Omega / StableNormal / DA3 / SAM3 / Any6D
     "geometry": ["geometry", "scale_pose", "deformation_spatial",
                  "statics_lighting", "multiview"],
-    # VLM 语义评判类: 仅 Qwen3-VL
+    # VLM 语义评判类: 仅 Qwen3.8-27B
     "vlm": ["material", "thermal", "electromag", "phase_change"],
     # 动力学/时序类: SpatialTracker V2 / FlowSeek / VFIMamba (+VGGT/SAM3)
     "dynamics": ["kinematics", "dynamics", "motion_persistence"],
@@ -444,7 +447,7 @@ def main():
         description="物理层批量评测 (任务式服务器: 一次加载, 跑完全部视频)")
     parser.add_argument("--manifest", "-m", required=True,
                         help="数据清单文件 (.jsonl / .json / .csv)")
-    parser.add_argument("--config", "-c", default="config.yaml",
+    parser.add_argument("--config", "-c", default="configs/config.yaml",
                         help="配置文件路径")
     parser.add_argument("--data-root", default=None,
                         help="视频/GT 相对路径的根目录 (默认=清单所在目录)")

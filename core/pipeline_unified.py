@@ -27,7 +27,7 @@ import time
 from typing import Optional
 from collections import defaultdict
 
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
 # HF 缓存目录 (必须在 import HF 模型前设置)
@@ -72,7 +72,7 @@ class UnifiedPipeline:
     """L1+L2+L3 统一评测管线。
 
     使用方式典型流程:
-        pipe = UnifiedPipeline("config.yaml")
+        pipe = UnifiedPipeline("configs/config.yaml")
         pipe.run(manifest, auto_analyze=True)
     或分步:
         pipe.initialize()
@@ -81,7 +81,7 @@ class UnifiedPipeline:
         pipe.print_report()
     """
 
-    def __init__(self, config_path: str = "config.yaml"):
+    def __init__(self, config_path: str = "configs/config.yaml"):
         self.config_path = config_path
         self.physics_pipeline: Optional[PhysicsPipeline] = None
         self.global_pipeline: Optional[GlobalBenchmarkPipeline] = None
@@ -535,7 +535,7 @@ def main():
     )
     parser.add_argument("--manifest", "-m", required=True,
                         help="manifest JSON 文件路径 (每条含 prompt + video + 可选 ref_image/dimensions/modality)")
-    parser.add_argument("--config", "-c", default="config.yaml",
+    parser.add_argument("--config", "-c", default="configs/config.yaml",
                         help="配置文件路径 (默认 config.yaml)")
     parser.add_argument("--layers", choices=["physics", "global", "all"],
                         default="all", help="评测层级 (默认 all)")
@@ -546,7 +546,7 @@ def main():
     parser.add_argument("--no-pregen-mesh", action="store_true",
                         help="跳过 Phase 0 Any6D mesh 预生成 (未缓存条目 R10/R17 走降级)")
     parser.add_argument("--output-dir", default=None,
-                        help="报告输出目录 (默认 config.yaml 中的 output_dir)")
+                        help="报告输出目录 (默认 configs/config.yaml 中的 output_dir)")
 
     args = parser.parse_args()
 

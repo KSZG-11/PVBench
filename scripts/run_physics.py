@@ -23,20 +23,23 @@ import os
 import sys
 import numpy as np
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CORE_DIR = os.path.join(PROJECT_ROOT, "core")
+sys.path.insert(0, PROJECT_ROOT)
+sys.path.insert(0, CORE_DIR)
 
 from pipeline_physics import PhysicsPipeline
 
 # 所有支持的物理评测模块
 AVAILABLE_MODULES = [
     "geometry",            # R01深度+R02法线+R03形状 (VGGT-Omega + StableNormal)
-    "scale_pose",          # R04绝对尺度+R09相对尺度+R10位姿 (DA3+SAM3+Any6D+VGGT+Qwen3-VL)
+    "scale_pose",          # R04绝对尺度+R09相对尺度+R10位姿 (DA3+SAM3+Any6D+VGGT+Qwen3.8-27B)
     "deformation_spatial", # R05形变+R11空间关系 (VGGT+SpatialTracker+SAM3)
     "statics_lighting",    # R12稳定性+R13光影空间+R18光影时间
-    "material",            # R06材料属性 (Qwen3-VL)
-    "thermal",             # R07热辐射 (Qwen3-VL)
-    "electromag",          # R14磁电 (Qwen3-VL)
-    "phase_change",        # R25相变 (Qwen3-VL)
+    "material",            # R06材料属性 (Qwen3.8-27B)
+    "thermal",             # R07热辐射 (Qwen3.8-27B)
+    "electromag",          # R14磁电 (Qwen3.8-27B)
+    "phase_change",        # R25相变 (Qwen3.8-27B)
     "kinematics",          # R15位移+R16速度加速度+R17角速度
     "motion_persistence",  # R19跨帧几何+R20运动连续性+R21物体恒存
     "dynamics",            # R22力效应+R23动量+R24能量
@@ -50,7 +53,7 @@ def main():
     )
     parser.add_argument("--video", "-v", required=True,
                         help="视频文件路径")
-    parser.add_argument("--config", "-c", default="config.yaml",
+    parser.add_argument("--config", "-c", default="configs/config.yaml",
                         help="配置文件路径")
     parser.add_argument("--modules", nargs="+", default=None,
                         choices=AVAILABLE_MODULES,

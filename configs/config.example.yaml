@@ -14,8 +14,8 @@ models:
   #       FP8 依赖 finegrained-fp8 kernel(需 triton 2.x, GPU 节点 triton 3.3.1 不兼容);
   #       故用 bitsandbytes 8bit 量化(transformers 原生, 无 kernel 下载依赖)。
   #
-  # 切换回 Qwen3.5-9B (更省显存 ~18GB, 但能力弱):
-  #   把 model_name 改为 .../Qwen--Qwen3.5-9B/snapshots/master, load_in_8bit: false
+  # 切换回 Qwen3.8-27B (更省显存 ~18GB, 但能力弱):
+  #   把 model_name 改为 .../Qwen--Qwen3.8-27B/snapshots/master, load_in_8bit: false
   vlm:
     default:
       model_name: "./hf_cache/models/Qwen--Qwen3.8-27B"
@@ -77,10 +77,12 @@ models:
 
 # ── 全局 Benchmark (L1+L2) 配置 ──
 global_benchmark:
-  prompt_sets:
-    instruction_following: "prompts/instruction_following.yaml"
-    commonsense: "prompts/commonsense.yaml"
-    action_causal: "prompts/action_causal.yaml"
+  # Prompt resources are intentionally maintained outside this repository.
+  # Add local paths here when running the global benchmark.
+  # prompt_sets:
+  #   instruction_following: "/path/to/instruction_following.yaml"
+  #   commonsense: "/path/to/commonsense.yaml"
+  #   action_causal: "/path/to/action_causal.yaml"
 
   logic:
     enabled: true
@@ -100,7 +102,7 @@ global_benchmark:
 # ── 物理层 (L3) 配置 ──
 physics:
   enabled: true
-  # VLM(Qwen3.5-9B) 按层 offload 到 CPU 腾显存 (为 A100-40GB 设计的 OOM 规避)。
+  # VLM(Qwen3.8-27B) 按层 offload 到 CPU 腾显存 (为 A100-40GB 设计的 OOM 规避)。
   # H20-95GB 显存充足, 关闭 offload 让 VLM 常驻 GPU, 避免每视频往返搬移 ~18GB 权重。
   # true  = 每个非 VLM 模块运行前把 VLM 挪到 CPU (省显存, 但每视频多次过 PCIe, 慢)
   # false = VLM 常驻 GPU (H20 推荐, 显著提速)
@@ -117,13 +119,13 @@ physics:
       enabled: true
     statics_lighting:      # R08+R13+R18 (VGGT-Omega+SAM3+ReasonX+StableNormal)
       enabled: true
-    material:              # R03 (Qwen3-VL)
+    material:              # R03 (Qwen3.8-27B)
       enabled: true
-    thermal:               # R07 (Qwen3-VL)
+    thermal:               # R07 (Qwen3.8-27B)
       enabled: true
-    electromag:            # R09 (Qwen3-VL)
+    electromag:            # R09 (Qwen3.8-27B)
       enabled: true
-    phase_change:          # R25 (Qwen3-VL)
+    phase_change:          # R25 (Qwen3.8-27B)
       enabled: true
     kinematics:            # R10+R11+R17 (SpatialTracker+Any6D)
       enabled: true
@@ -151,4 +153,3 @@ sampling:
     # 全帧(240帧)逐帧跑 StableNormal+InternVL Judge 是最大性能开销(约7.5倍)。
   # 全帧加载最大帧数上限(防止超长视频OOM)。0=不限。
   full_frame_max: 300
-

@@ -49,7 +49,7 @@ class PhysicsPipeline:
     T2V/I2V 模式: evaluator 回退到合理性/自洽性检查。
     """
 
-    def __init__(self, config_path: str = "config.yaml"):
+    def __init__(self, config_path: str = "configs/config.yaml"):
         with open(config_path, "r", encoding="utf-8") as f:
             self.config = yaml.safe_load(f)
 

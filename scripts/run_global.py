@@ -41,7 +41,10 @@ import sys
 import glob
 from typing import Optional
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CORE_DIR = os.path.join(PROJECT_ROOT, "core")
+sys.path.insert(0, PROJECT_ROOT)
+sys.path.insert(0, CORE_DIR)
 
 from pipeline_global import GlobalBenchmarkPipeline
 
@@ -126,7 +129,7 @@ def main():
                         help="Prompt文本文件（一行一个）或含sample_id/t2v_prompt的JSONL")
     parser.add_argument("--canonical-ref-dir", default=None,
                         help="T2V Canonical Reference Proxy参考图目录，文件名按prompt_id.png")
-    parser.add_argument("--config", "-c", default="config.yaml",
+    parser.add_argument("--config", "-c", default="configs/config.yaml",
                         help="配置文件路径")
     parser.add_argument("--layers", default="all",
                         choices=["all", "logic", "quality"],

@@ -1,38 +1,46 @@
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
-.venv/
-venv/
-.env
-.env.*
-!.env.example
-*.log
+*.egg
+dist/
+build/
+
+# 评测结果输出
 results/
-results_*/
-checkpoints/
-hf_cache/
-models_cache/
+
+# 测试视频
+test_videos/
+*.mp4
+*.avi
+*.mov
+
+# 模型权重
 *.pt
 *.pth
-*.ckpt
+*.bin
 *.safetensors
-*.mp4
-*.mov
-*.avi
-*.webm
-*.npy
-*.npz
-*.pkl
-*.pickle
-*.so
-*.o
-*.obj
-build/
-dist/
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
+*.ckpt
+checkpoints/
 
-# Prompt and benchmark resource assets are maintained separately
-prompts/
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# 环境
+venv/
+.venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 大文件
+*.xlsx
+*.pdf
+third_party/

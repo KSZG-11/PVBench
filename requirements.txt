@@ -1,23 +1,54 @@
-# Base Python dependencies for the source-level evaluation framework.
-# Install a compatible PyTorch + torchvision build separately from the official
-# PyTorch selector for your OS/CUDA; this file deliberately does not choose one.
-PyYAML>=6.0
-numpy>=1.24,<2
-scipy>=1.10
+# Core
+# ⚠️ torch / torchvision: 不要用 pip 装! 使用 GPU 节点系统自带的 cu118 版本。
+#    (节点 driver 470 只兼容 CUDA 11.x; 装 cu12x 的 torch 会 Error 803 → GPU 不可用)
+#    确认: python3 -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+# torch>=2.1.0
+# torchvision
+transformers>=4.57.0          # Qwen3-VL-8B 需要 (Qwen3VLForConditionalGeneration)
+accelerate
+# bitsandbytes        # NVIDIA CUDA 专属量化库，AMD ROCm 用户请注释此行
+                      # ROCm 替代方案: bitsandbytes-rocm (实验性, 不稳定)
+                      # 本项目在 ROCm 上自动禁用 4bit 量化，无需安装
 Pillow>=10.0
 opencv-python-headless>=4.8
-transformers>=4.57.0
-accelerate
-qwen-vl-utils
-timm
-open_clip_torch
-diffusers>=0.33.0
-imageio
-requests
-safetensors
-matplotlib>=3.7
+numpy>=1.24,<2            # numpy 2.x 不兼容 numba / depth-anything-3 / vggt-omega
+scipy>=1.10
+pyyaml>=6.0
+tqdm
 
-# Optional video/model adapters may additionally require decord, bitsandbytes,
-# depth-anything-3, open3d, pyceres, kornia-rs, and CUDA-compiled packages.
-# These are intentionally not installed automatically because availability and
-# compatibility depend on the selected evaluator, model terms, Python and CUDA.
+# VLM (Qwen3-VL)
+qwen-vl-utils
+
+# Quality Layer - Specialist Models
+timm                    # DINOv2 backbone
+open_clip_torch         # CLIP model (optional, transformers CLIP also works)
+
+# Physics Layer - Specialized Models (Phase 2 deployment)
+# 说明: torch 相关的编译型包 (mamba-ssm/flash-attn/nvdiffrast) 需 nvcc, 由 setup_gpu.sh 单独尝试;
+#       depth-anything-3 用 --no-deps 安装 (防止升级 torch), 也在 setup_gpu.sh 里做。
+
+# StableNormal 需要 diffusers (自定义 pipeline)
+# ⚠️ Wan2.1 pipeline (WanPipeline/WanImageToVideoPipeline) 从 diffusers 0.33 才开始加入,
+#    旧版 0.29.2 会 ImportError。须 >=0.33。setup_gpu.sh 的 [1a] 段也会强校验此版本。
+#    (旧 A100 torch2.2.2 的 xpu 约束已不适用: 现 H20 是 torch2.7.1)
+diffusers>=0.33.0
+# SpatialTracker V2 predictor 需要 decord 读视频
+decord
+
+# SAM3: 所有分割维度使用 SAM3, 权重走本地 hf_cache/models/facebook--sam3。
+
+# DA3Metric-Large: depth-anything-3 (由 setup_gpu.sh --no-deps 安装)
+
+# ReasonX: follow official repository
+
+# Any6D: follow official repository
+
+# FlowSeek: follow official repository
+
+# VFIMamba: follow official repository
+
+# Genesis:
+# genesis-world (pending stable release)
+
+# Reporting
+matplotlib>=3.7     # optional, for radar charts
