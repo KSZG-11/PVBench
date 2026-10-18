@@ -29,6 +29,14 @@ class ReleaseSmokeTests(unittest.TestCase):
         self.assertTrue(row["video"].startswith("/path/to/"))
         self.assertTrue(set(row["dimensions"]).issubset(DIMENSION_TO_CATEGORY))
 
+    def test_readme_assets_and_model_reference_are_present(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8-sig")
+        for asset in ("overview.png", "pipeline.png", "prompt-distribution.png", "results.png"):
+            self.assertTrue((ROOT / "assets" / asset).is_file(), asset)
+            self.assertIn(f"assets/{asset}", readme)
+        self.assertNotIn("Qwen3-VL", readme)
+        self.assertIn("Qwen3.8-27B", (ROOT / "requirements.txt").read_text(encoding="utf-8-sig"))
+
     def test_mit_license_and_release_note_are_present(self):
         self.assertTrue((ROOT / "LICENSE").exists())
         self.assertIn("MIT License", (ROOT / "LICENSE").read_text(encoding="utf-8-sig"))

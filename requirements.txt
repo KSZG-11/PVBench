@@ -4,7 +4,7 @@
 #    确认: python3 -c "import torch; print(torch.__version__, torch.cuda.is_available())"
 # torch>=2.1.0
 # torchvision
-transformers>=4.57.0          # Qwen3-VL-8B 需要 (Qwen3VLForConditionalGeneration)
+transformers>=4.57.0          # Qwen3.8-27B processor/model APIs
 accelerate
 # bitsandbytes        # NVIDIA CUDA 专属量化库，AMD ROCm 用户请注释此行
                       # ROCm 替代方案: bitsandbytes-rocm (实验性, 不稳定)
@@ -16,7 +16,7 @@ scipy>=1.10
 pyyaml>=6.0
 tqdm
 
-# VLM (Qwen3-VL)
+# VLM (Qwen3.8-27B)
 qwen-vl-utils
 
 # Quality Layer - Specialist Models
@@ -24,12 +24,12 @@ timm                    # DINOv2 backbone
 open_clip_torch         # CLIP model (optional, transformers CLIP also works)
 
 # Physics Layer - Specialized Models (Phase 2 deployment)
-# 说明: torch 相关的编译型包 (mamba-ssm/flash-attn/nvdiffrast) 需 nvcc, 由 setup_gpu.sh 单独尝试;
-#       depth-anything-3 用 --no-deps 安装 (防止升级 torch), 也在 setup_gpu.sh 里做。
+# Some optional CUDA extensions (mamba-ssm/flash-attn/nvdiffrast) require
+# a matching local toolchain and are installed separately.
 
 # StableNormal 需要 diffusers (自定义 pipeline)
 # ⚠️ Wan2.1 pipeline (WanPipeline/WanImageToVideoPipeline) 从 diffusers 0.33 才开始加入,
-#    旧版 0.29.2 会 ImportError。须 >=0.33。setup_gpu.sh 的 [1a] 段也会强校验此版本。
+#    Older versions may not provide WanPipeline/WanImageToVideoPipeline.
 #    (旧 A100 torch2.2.2 的 xpu 约束已不适用: 现 H20 是 torch2.7.1)
 diffusers>=0.33.0
 # SpatialTracker V2 predictor 需要 decord 读视频
@@ -37,7 +37,8 @@ decord
 
 # SAM3: 所有分割维度使用 SAM3, 权重走本地 hf_cache/models/facebook--sam3。
 
-# DA3Metric-Large: depth-anything-3 (由 setup_gpu.sh --no-deps 安装)
+# DA3Metric-Large: install depth-anything-3 separately with a compatible
+# torch build if this adapter is enabled.
 
 # ReasonX: follow official repository
 

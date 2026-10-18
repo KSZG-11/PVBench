@@ -12,7 +12,7 @@ IF-7 否定遵循
 IF-8 场景匹配   (原 SA-6, IF 未覆盖)
 IF-9 相机运动   (原 SA-9, IF 未覆盖)
 
-评测方式: Qwen3-VL 逐 (prompt, video) 对评分 → 跨测试集聚合
+评测方式: Qwen3.8-27B 逐 (prompt, video) 对评分 → 跨测试集聚合
 IF-1 辅助使用 CLIP/DINO 专用模型作为客观参考分
 
 注: IF-10 参考条件保真度由 reference_fidelity 计算底层子指标，
@@ -155,7 +155,7 @@ class InstructionFollowingEvaluator(BaseEvaluator):
                               prompt: str, dim_id: str,
                               dim_name: str, dim_desc: str
                               ) -> tuple[int, str]:
-        """单维度评测 — Qwen3-VL"""
+        """单维度评测 — Qwen3.8-27B"""
         eval_prompt = f"""你是一个视频生成质量评测专家。请对照以下 prompt 评判生成视频的语义对齐程度。
 
 【原始 Prompt】

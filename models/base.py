@@ -326,7 +326,7 @@ def resolve_local_model(model_id: str, cache_dir: Optional[str] = None) -> str:
 
     统一解决"魔搭 flat 格式 (hf_cache/models/{org}--{name}) 与 HF snapshot 格式
     (models--{org}--{name}/snapshots/*/) 与 transformers 默认查找路径不一致"导致的
-    离线找不到权重问题。被 Qwen3.5 / DA3 / SAM3 / ReasonX / VGGT-Omega / SpatialTracker 等复用。
+    离线找不到权重问题，被 DA3、SAM3、ReasonX、VGGT-Omega 和 SpatialTracker 等模型复用。
     """
     if not model_id or "/" not in str(model_id):
         # 已是本地路径或无 org 前缀

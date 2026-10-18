@@ -1,9 +1,9 @@
 """
 L3 物理层 — 标度位姿组评测器
-R04 绝对尺度 (DA3 + SAM3 + Qwen3-VL) + R09 相对尺度 (VGGT + SAM3) + R10 三维位姿 (Any6D + VGGT + Qwen3-VL)
+R04 绝对尺度 (DA3 + SAM3 + Qwen3.8-27B) + R09 相对尺度 (VGGT + SAM3) + R10 三维位姿 (Any6D + VGGT + Qwen3.8-27B)
 
 评测思路 (来自 PHYSICS_TAXONOMY.md):
-- R04: CI2V 直接米制误差 vs GT; T2V/I2V DA3 尺度先验 + Qwen3-VL 合理区间判断
+- R04: CI2V 直接米制误差 vs GT; T2V/I2V DA3 尺度先验 + Qwen3.8-27B 合理区间判断
 - R09: 跨帧包围盒变异系数 CV; 物体尺寸比误差; 无GT VLM 合理性
 - R10: Sim(3)对齐后 ATE + RPE; T2V/I2V prompt 指定已知位姿变化 → VLM 比对最终误差
 """
@@ -123,9 +123,9 @@ class ScalePoseEvaluator(BaseEvaluator):
     # ── R04 VLM 合理区间判断 ──
     def _eval_size_reasonability_vlm(self, sizes: dict,
                                       prompt: str) -> tuple:
-        """用 Qwen3-VL 判断 DA3 估计的米制尺寸是否在合理区间内。
+        """用 Qwen3.8-27B 判断 DA3 估计的米制尺寸是否在合理区间内。
 
-        表格要求: "用 Qwen3-VL 判断是否在合理区间内"
+        表格要求: "用 Qwen3.8-27B 判断是否在合理区间内"
 
         Returns:
             (score: int 1-5, violations: list[str])
@@ -179,7 +179,7 @@ class ScalePoseEvaluator(BaseEvaluator):
     # ── R10 VLM 位姿变化比对 ──
     def _eval_pose_reasonability_vlm(self, frames, positions,
                                        rotations, prompt: str) -> tuple:
-        """用 Qwen3-VL 判断估计的位姿变化是否与 prompt 描述一致。
+        """用 Qwen3.8-27B 判断估计的位姿变化是否与 prompt 描述一致。
 
         表格要求: "prompt 指定已知物体位姿变化，比对最终角度误差、
         位置误差、转轴误差 如 '立方体绕竖直轴恰好转 90°'"
@@ -375,8 +375,8 @@ class ScalePoseEvaluator(BaseEvaluator):
                                   [] if score >= 4 else [f"平均尺寸误差={avg:.3f}m"],
                                   metrics={"avg_error_m": avg, "sizes": sizes}, status="ok")
 
-        # T2V/I2V: Qwen3-VL 合理区间判断 (替代硬阈值 0.01-20m)
-        # 表格要求: "用 Qwen3-VL 判断是否在合理区间内"
+        # T2V/I2V: Qwen3.8-27B 合理区间判断 (替代硬阈值 0.01-20m)
+        # 表格要求: "用 Qwen3.8-27B 判断是否在合理区间内"
         v = []
         vlm_score = None
         if self.vlm and getattr(self.vlm, "is_loaded", False):

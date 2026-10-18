@@ -12,7 +12,7 @@ from ..base import BaseEvaluator, EvalResult
 
 
 class VLMBaseEvaluator(BaseEvaluator):
-    """所有 Qwen3-VL 评测器的公共基类"""
+    """所有 Qwen3.8-27B 评测器的公共基类"""
 
     def __init__(self, vlm, layer: str, config: Optional[dict] = None):
         super().__init__(layer, config)

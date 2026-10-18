@@ -1,6 +1,6 @@
 """
 L3 物理层 — 磁电作用评测器
-R14 磁电作用 (Qwen3-VL)
+R14 磁电作用 (Qwen3.8-27B)
 """
 from typing import Optional
 from PIL import Image
@@ -10,7 +10,7 @@ from ._vlm_base import VLMBaseEvaluator
 
 
 class ElectromagEvaluator(VLMBaseEvaluator):
-    """磁电作用评测器 (R14, Qwen3-VL)"""
+    """磁电作用评测器 (R14, Qwen3.8-27B)"""
 
     def __init__(self, vlm, config: Optional[dict] = None):
         super().__init__(vlm, "L3-Physics/Electromag", config)

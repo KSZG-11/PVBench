@@ -78,21 +78,17 @@ class ModelLoader:
         self.physics_config = model_cfg.get("physics", {})
 
     def get_vlm(self, layer: str = "default") -> VLMWrapper:
-        # layer只覆盖default中的参数，避免physics/logic仅配置max_new_tokens时
-        # 丢失Qwen3.5的model_name而意外回退到Qwen3-VL。
+        # Layer-specific settings override only the default values they define.
         default_cfg = dict(self.vlm_config.get("default", {}))
         layer_cfg = dict(self.vlm_config.get(layer, {}))
         vlm_cfg = {**default_cfg, **layer_cfg}
-        model_name = vlm_cfg.get("model_name", "Qwen/Qwen3.5-9B")
-        # 环境变量覆盖: PWB_VLM_MODEL 可临时切换 VLM (如 Qwen3.8-27B 对比 Qwen3.5),
-        # 不改 config 即可跑两遍做 baseline 对比。
+        model_name = vlm_cfg.get("model_name", "./hf_cache/models/Qwen--Qwen3.8-27B")
+        # PWB_VLM_MODEL can override the configured model for ablations.
         import os as _os
         env_override = _os.environ.get("PWB_VLM_MODEL")
         if env_override:
             model_name = env_override
-        # ⚠️ 按 model_name 缓存 (而非 layer): default/logic/physics 用的是同一个 Qwen3-VL-8B,
-        #    若按 layer 各加载一份, A100-40GB 会 OOM (两份 8B ≈ 32GB)。共享单实例即可,
-        #    max_new_tokens 差异由各 evaluator 调用时按需传入。
+        # Cache by model name so all evaluation layers share one VLM instance.
         key = f"vlm::{model_name}"
         if key not in self._cache:
             m = VLMWrapper(

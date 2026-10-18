@@ -16,10 +16,10 @@ __all__ = [
     "ScalePoseEvaluator",          # R04+R09+R10
     "DeformationSpatialEvaluator", # R05+R11
     "StaticsLightingEvaluator",     # R12+R13+R18
-    "MaterialEvaluator",           # R06 (Qwen3-VL)
-    "ThermalEvaluator",            # R07 (Qwen3-VL)
-    "ElectromagEvaluator",         # R14 (Qwen3-VL)
-    "PhaseChangeEvaluator",        # R25 (Qwen3-VL)
+    "MaterialEvaluator",           # R06 (Qwen3.8-27B)
+    "ThermalEvaluator",            # R07 (Qwen3.8-27B)
+    "ElectromagEvaluator",         # R14 (Qwen3.8-27B)
+    "PhaseChangeEvaluator",        # R25 (Qwen3.8-27B)
     "KinematicsEvaluator",         # R15+R16+R17
     "MotionPersistenceEvaluator",  # R19+R20+R21
     "DynamicsEvaluator",           # R22+R23+R24

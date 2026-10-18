@@ -1,6 +1,6 @@
 """
 L3 物理层 — 材料属性评测器
-R06 材料属性 (Qwen3-VL)
+R06 材料属性 (Qwen3.8-27B)
 
 评测方案见PHYSICS_TAXONOMY.md：7 大类 30+ 子类材料行为矩阵。
 ① VLM识别材料 → ② 提取关键事件 → ③ 逐维描述 → ④ 与标准矩阵比对 → ⑤ 逐维1-5分 → ⑥ 汇总
@@ -53,7 +53,7 @@ MATERIAL_MATRIX = {
 
 
 class MaterialEvaluator(VLMBaseEvaluator):
-    """材料属性评测器 (R06, Qwen3-VL)"""
+    """材料属性评测器 (R06, Qwen3.8-27B)"""
 
     def __init__(self, vlm, config: Optional[dict] = None):
         super().__init__(vlm, "L3-Physics/Material", config)

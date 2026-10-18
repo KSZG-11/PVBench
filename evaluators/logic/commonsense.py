@@ -4,7 +4,7 @@ L1 逻辑层 — 常识推理评测器（全局 Benchmark）
 3个维度，跨标准化 prompt 集聚合评分：
 CS-1 物理常识 | CS-2 生物常识 | CS-3 社会常识
 
-评测方式: Qwen3-VL 多选判断 + 解释合理性评分
+评测方式: Qwen3.8-27B 多选判断 + 解释合理性评分
 """
 from typing import Optional
 import numpy as np

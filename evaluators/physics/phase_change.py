@@ -1,6 +1,6 @@
 """
 L3 物理层 — 相变评测器
-R25 相变 (Qwen3-VL) — 熔化/凝固/汽化/凝华/升华/燃烧
+R25 相变 (Qwen3.8-27B) — 熔化/凝固/汽化/凝华/升华/燃烧
 """
 from typing import Optional
 from PIL import Image
@@ -10,7 +10,7 @@ from ._vlm_base import VLMBaseEvaluator
 
 
 class PhaseChangeEvaluator(VLMBaseEvaluator):
-    """相变评测器 (R25, Qwen3-VL)"""
+    """相变评测器 (R25, Qwen3.8-27B)"""
 
     def __init__(self, vlm, config: Optional[dict] = None):
         super().__init__(vlm, "L3-Physics/PhaseChange", config)

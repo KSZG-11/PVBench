@@ -12,7 +12,7 @@ from typing import Tuple
 
 
 # ── 兼容垫片: torch<2.3 无 torch.compiler.is_compiling, 但 transformers>=4.57
-#    (Qwen3-VL 必需) 在 generate/forward 时会调用它 → 缺失会 AttributeError。
+#    (Qwen3.8-27B 必需) 在 generate/forward 时会调用它 → 缺失会 AttributeError。
 #    系统 torch 锁死 2.2.2+cu118 (driver 470 只兼容 cu11x, 不能升级), 故打垫片。 ──
 try:
     import torch.compiler as _torch_compiler

@@ -85,26 +85,26 @@ class PhysicsPipeline:
         modules = [
             # (module_key, loader_methods, description)
             ("geometry", ["get_vggt", "get_stable_normal", "get_sam3", "get_vlm"],
-             "VGGT-Omega + StableNormal + SAM3 + Qwen3-VL(R03非标准形状)"),
+             "VGGT-Omega + StableNormal + SAM3 + Qwen3.8-27B(R03非标准形状)"),
             ("scale_pose", ["get_da3", "get_sam3", "get_vggt", "get_any6d", "get_vlm"],
-             "DA3 + SAM3 + VGGT-Omega + Any6D + Qwen3-VL"),
+             "DA3 + SAM3 + VGGT-Omega + Any6D + Qwen3.8-27B"),
             ("deformation_spatial", ["get_vggt", "get_spatial_tracker", "get_sam3"],
              "VGGT-Omega + SpatialTracker + SAM3"),
             ("statics_lighting", ["get_vggt", "get_sam3", "get_reasonx", "get_stable_normal"],
              "VGGT-Omega + SAM3 + ReasonX + StableNormal"),
             ("material", ["get_vlm"],
-             "Qwen3-VL"),
+             "Qwen3.8-27B"),
             ("thermal", ["get_vlm"],
-             "Qwen3-VL"),
+             "Qwen3.8-27B"),
             ("electromag", ["get_vlm"],
-             "Qwen3-VL"),
+             "Qwen3.8-27B"),
             ("phase_change", ["get_vlm"],
-             "Qwen3-VL"),
+             "Qwen3.8-27B"),
             ("kinematics", ["get_spatial_tracker", "get_any6d", "get_sam3"],
              "SpatialTracker + Any6D + SAM3"),
             ("motion_persistence", ["get_vggt", "get_flowseek", "get_vfimamba",
                                     "get_spatial_tracker", "get_sam3", "get_vlm"],
-             "VGGT + FlowSeek + VFIMamba + SpatialTracker + SAM3 + Qwen3-VL"),
+             "VGGT + FlowSeek + VFIMamba + SpatialTracker + SAM3 + Qwen3.8-27B"),
             ("dynamics", ["get_spatial_tracker", "get_sam3", "get_da3"],
              "SpatialTracker + SAM3(物体级轨迹) + DA3(米制锚定)"),
             ("multiview", ["get_vggt"],
@@ -300,7 +300,7 @@ class PhysicsPipeline:
         self._print_overview(result)
         return result
 
-    # 需要 Qwen3-VL 的评测层(其余层运行前把 VLM 挪到 CPU 腾显存)
+    # 需要 Qwen3.8-27B 的评测层(其余层运行前把 VLM 挪到 CPU 腾显存)
     _VLM_MODULES = {"geometry", "material", "thermal", "electromag", "phase_change",
                     "motion_persistence", "scale_pose"}
 
@@ -844,8 +844,7 @@ class PhysicsPipeline:
         )
 
         try:
-            # VLMWrapper公共接口是 chat，不是旧版 ask；前置检查失败不应
-            # 把有效视频误报为内容不匹配。
+            # A failed content pre-check must not mark a valid video as mismatched.
             answer = vlm.chat(frames_sub, question, max_new_tokens=64)
         except Exception as e:
             return {"content_ok": False, "reason": f"VLM调用失败: {e}"}

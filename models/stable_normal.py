@@ -42,7 +42,7 @@ def _patch_dinov2_offline():
     解决方案: 从本地缓存直接构造 DINOv2 模型, 劫持 torch.hub.load,
     对所有 facebookresearch/dinov2 的调用返回预加载实例。
 
-    预置条件 (setup_gpu.sh 已处理):
+    预置条件:
       $TORCH_HOME/hub/checkpoints/dinov2_vitl14_pretrain.pth  ← 权重
       $TORCH_HOME/hub/facebookresearch_dinov2_main/            ← 源码
       (源码中已打 from __future__ import annotations 补丁以兼容 py3.9)

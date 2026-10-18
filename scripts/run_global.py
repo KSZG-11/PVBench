@@ -134,8 +134,6 @@ def main():
     parser.add_argument("--layers", default="all",
                         choices=["all", "logic", "quality"],
                         help="只跑指定层 (默认全部)")
-    parser.add_argument("--skip-init", action="store_true",
-                        help="跳过模型初始化")
     args = parser.parse_args()
 
     # 构建映射
@@ -178,12 +176,11 @@ def main():
     # 初始化管线
     pipeline = GlobalBenchmarkPipeline(config_path=args.config)
 
-    if not args.skip_init:
-        try:
-            pipeline.initialize()
-        except Exception as e:
-            print(f"模型初始化失败: {e}")
-            print("继续使用 stub 模式...")
+    try:
+        pipeline.initialize()
+    except Exception as e:
+        print(f"模型初始化失败: {e}")
+        print("继续运行；缺失模型对应的结果将标记为 error/skipped。")
 
     # 运行
     run_logic = args.layers in ("all", "logic")

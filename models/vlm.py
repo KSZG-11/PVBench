@@ -1,8 +1,7 @@
 """
 Qwen 视觉语言模型推理封装（真实推理，无 stub）
 
-仅使用: Qwen3.5-9B (qwen3_5, 2026.02, 原生多模态)。
-        不再回退 Qwen3-VL-8B-Instruct。
+使用 Qwen3.8-27B 的原生多模态接口。
 
 官方 API (已查证, 需 transformers>=4.57):
   # 通用: AutoModelForImageTextToText 覆盖 Qwen3_5ForConditionalGeneration。
@@ -26,7 +25,7 @@ from .backend_utils import bitsandbytes_available, get_safe_dtype
 
 
 class VLMWrapper:
-    """Qwen3-VL 统一推理接口（真实推理）"""
+    """Qwen3.8-27B 统一推理接口（真实推理）"""
 
     def __init__(self, model_name: str,
                  device: Optional[str] = None,
@@ -60,7 +59,7 @@ class VLMWrapper:
         }
 
     def load(self, **kwargs) -> None:
-        """加载 Qwen VLM (Qwen3.5 / Qwen3-VL 通用)。失败抛异常。"""
+        """Load the configured Qwen3.8-27B VLM; raise on failure."""
         import os as _os
         from transformers import AutoProcessor
         from .base import resolve_local_model
@@ -106,9 +105,8 @@ class VLMWrapper:
 
         proc_kwargs = {k: v for k, v in load_kwargs.items() if k in ("cache_dir", "local_files_only")}
         self.processor = AutoProcessor.from_pretrained(src, **proc_kwargs)
-        # 加载 Qwen3.5 / Qwen3.8 (model_type 均为 qwen3_5, Qwen3_5ForConditionalGeneration)。
-        #   官方推荐 AutoModelForMultimodalLM, 但 AutoModelForImageTextToText 走同一注册表
-        #   通常也能加载; 先试 ImageTextToText, 失败再 fallback 到 MultimodalLM。
+        # Try the generic image-text loader first, then the multimodal fallback
+        # for transformers versions that register the model under that class.
         from transformers import AutoModelForImageTextToText
         try:
             self.model = AutoModelForImageTextToText.from_pretrained(src, **load_kwargs)
@@ -189,9 +187,7 @@ class VLMWrapper:
         messages = [{"role": "user", "content": content}]
 
         model_device = next(self.model.parameters()).device
-        # ⚠️ Qwen3.5 默认开启思考模式(输出 "Thinking Process" 长推理链),
-        #    会导致 chat_json 解析失败。传 enable_thinking=False 关闭思考,
-        #    让模型直接输出答案 (对 Qwen3-VL 无此参数, 用 try 兼容)。
+        # Disable reasoning when supported so structured JSON remains parseable.
         try:
             inputs = self.processor.apply_chat_template(
                 messages, tokenize=True, add_generation_prompt=True,
@@ -199,17 +195,19 @@ class VLMWrapper:
                 enable_thinking=False,
             ).to(model_device)
         except TypeError:
-            # 旧模型(如 Qwen3-VL)的 chat template 不接受 enable_thinking
+            # Older processors may not accept enable_thinking.
             inputs = self.processor.apply_chat_template(
                 messages, tokenize=True, add_generation_prompt=True,
                 return_dict=True, return_tensors="pt",
             ).to(model_device)
 
-        gen = self.model.generate(
-            **inputs, max_new_tokens=max_new_tokens,
-            do_sample=temperature > 0,
-            temperature=temperature if temperature > 0 else None,
-        )
+        generation_kwargs = {
+            "max_new_tokens": max_new_tokens,
+            "do_sample": temperature > 0,
+        }
+        if temperature > 0:
+            generation_kwargs["temperature"] = temperature
+        gen = self.model.generate(**inputs, **generation_kwargs)
         trimmed = [o[len(i):] for i, o in zip(inputs["input_ids"], gen)]
         text = self.processor.batch_decode(
             trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
@@ -219,7 +217,7 @@ class VLMWrapper:
     def _extract_json(text: str) -> Optional[dict]:
         """从 VLM 原始输出中稳健提取一个 JSON 对象。
 
-        处理 Qwen3.5/推理模型的 "Thinking Process" 前缀、markdown 代码块、
+        处理推理模型的 reasoning 前缀、markdown 代码块、
         前后缀说明文字等污染。策略:
         1. 先剥掉 markdown 代码块围栏 (```json ... ```)。
         2. 优先从**最后一个** '{' 位置尝试 raw_decode (答案 JSON 通常在思考过程之后)，

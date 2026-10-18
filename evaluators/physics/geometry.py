@@ -25,7 +25,7 @@ class GeometryEvaluator(BaseEvaluator):
         self.vggt = vggt
         self.stable_normal = stable_normal
         self.sam3 = sam3  # R01/R03 需要 SAM3 分割
-        self.vlm = vlm    # R03 非标准几何体按表格使用 Qwen3-VL
+        self.vlm = vlm    # R03 非标准几何体按表格使用 Qwen3.8-27B
 
     def evaluate(self, frames: list[Image.Image],
                  depth_gt: Optional[np.ndarray] = None,
@@ -905,7 +905,7 @@ class GeometryEvaluator(BaseEvaluator):
 
         # 表格对非标准几何体要求用VLM判形状完整/无扭曲。
         if self.vlm is None or not getattr(self.vlm, "is_loaded", False):
-            return EvalResult.skipped("R03-形状", "非标准形状需要Qwen3-VL，但VLM未加载")
+            return EvalResult.skipped("R03-形状", "非标准形状需要Qwen3.8-27B，但VLM未加载")
         idx = np.linspace(0, len(all_frames) - 1, min(4, len(all_frames)), dtype=int)
         images = [Image.fromarray(all_frames[i].astype(np.uint8)) for i in idx]
         judge = (
@@ -1015,7 +1015,7 @@ class GeometryEvaluator(BaseEvaluator):
 
         # ── T2V/I2V proxy（严格按表格） ──
         # 已知标准形状：mask筛选重建点云 vs canonical理想模型 Chamfer。
-        # 非标准形状：Qwen3-VL 判完整性/无扭曲。两条均来自PHYSICS_TAXONOMY。
+        # 非标准形状：Qwen3.8-27B 判完整性/无扭曲。两条均来自PHYSICS_TAXONOMY。
         return self._eval_shape_proxy(key_frame, all_frames, prompt,
                                        evaluator_context=evaluator_context)
 

@@ -14,8 +14,8 @@ models:
   #       FP8 依赖 finegrained-fp8 kernel(需 triton 2.x, GPU 节点 triton 3.3.1 不兼容);
   #       故用 bitsandbytes 8bit 量化(transformers 原生, 无 kernel 下载依赖)。
   #
-  # 切换回 Qwen3.8-27B (更省显存 ~18GB, 但能力弱):
-  #   把 model_name 改为 .../Qwen--Qwen3.8-27B/snapshots/master, load_in_8bit: false
+  # 若显存不足，可切换到更小的兼容 VLM，并同步调整量化设置:
+  #   把 model_name 改为本地兼容 VLM 路径，并将 load_in_8bit 设为 false
   vlm:
     default:
       model_name: "./hf_cache/models/Qwen--Qwen3.8-27B"

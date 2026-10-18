@@ -67,8 +67,6 @@ def main():
                         help="场景类型(影响动力学/相变/磁电评测的假设)")
     parser.add_argument("--expected-materials", nargs="+", default=None,
                         help="期望的材料列表，如 '玻璃 水'")
-    parser.add_argument("--skip-init", action="store_true",
-                        help="跳过模型初始化")
     parser.add_argument("--prompt", default=None,
                         help="视频的 prompt 文本 (用于 R04 物体验证等需要 prompt 的维度; 不传则相关过滤失效)")
     parser.add_argument("--evaluation-method", default=None,
@@ -135,12 +133,11 @@ def main():
 
     pipeline = PhysicsPipeline(config_path=args.config)
 
-    if not args.skip_init:
-        try:
-            pipeline.initialize()
-        except Exception as e:
-            # 软失败: 单模型加载失败不中断, 相关维度会记 status=error
-            print(f"模型初始化部分失败(软失败, 相关维度将记 status=error): {e}")
+    try:
+        pipeline.initialize()
+    except Exception as e:
+        # 单模型加载失败不中断；相关维度会记为 error。
+        print(f"模型初始化部分失败(软失败, 相关维度将记 status=error): {e}")
 
     # 运行
     result = pipeline.run(

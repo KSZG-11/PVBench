@@ -1,6 +1,6 @@
 """
 L3 物理层 — 热辐射评测器
-R07 热辐射 (Qwen3-VL) — 五维辐射检验(表格D列)
+R07 热辐射 (Qwen3.8-27B) — 五维辐射检验(表格D列)
 """
 from typing import Optional
 from PIL import Image
@@ -10,7 +10,7 @@ from ._vlm_base import VLMBaseEvaluator
 
 
 class ThermalEvaluator(VLMBaseEvaluator):
-    """热辐射评测器 (R07, Qwen3-VL)"""
+    """热辐射评测器 (R07, Qwen3.8-27B)"""
 
     def __init__(self, vlm, config: Optional[dict] = None):
         super().__init__(vlm, "L3-Physics/Thermal", config)
