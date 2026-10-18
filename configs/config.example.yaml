@@ -71,8 +71,6 @@ models:
     vfimamba:
       model_path: null
       device: "cuda"
-    # genesis:                   # 废弃: AC-1 已改为反事实动作对，不再需要 Genesis 仿真引擎
-    #   device: "cuda"
 
 # ── 全局 Benchmark (L1+L2) 配置 ──
 global_benchmark:
