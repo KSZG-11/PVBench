@@ -10,9 +10,8 @@ models:
   # ── VLM ──
   # 使用 Qwen3.8-27B 8bit 量化 (LLM.int8, 精度接近 fp16, 显存 ~18GB)。
   #
-  # 背景: Qwen3.8-27B BF16 ~54.7GB 与其余常驻模型共存会 OOM(总计>95GB);
-  #       FP8 依赖 finegrained-fp8 kernel(需 triton 2.x, GPU 节点 triton 3.3.1 不兼容);
-  #       故用 bitsandbytes 8bit 量化(transformers 原生, 无 kernel 下载依赖)。
+  # 8-bit quantization reduces memory usage; it requires bitsandbytes on NVIDIA GPUs.
+  # If bitsandbytes is unavailable, the loader falls back to BF16 and needs more memory.
   #
   # 若显存不足，可切换到更小的兼容 VLM，并同步调整量化设置:
   #   把 model_name 改为本地兼容 VLM 路径，并将 load_in_8bit 设为 false
@@ -102,36 +101,33 @@ global_benchmark:
 # ── 物理层 (L3) 配置 ──
 physics:
   enabled: true
-  # VLM(Qwen3.8-27B) 按层 offload 到 CPU 腾显存 (为 A100-40GB 设计的 OOM 规避)。
-  # H20-95GB 显存充足, 关闭 offload 让 VLM 常驻 GPU, 避免每视频往返搬移 ~18GB 权重。
-  # true  = 每个非 VLM 模块运行前把 VLM 挪到 CPU (省显存, 但每视频多次过 PCIe, 慢)
-  # false = VLM 常驻 GPU (H20 推荐, 显著提速)
-  # ⚠️ 注：VLM 高频使用，保持常驻（false）。Any6D(R10) 的 InstantMesh 临时加载
-  #    Zero123++ 时，由 pipeline_physics.py 在测 R10 前 offload 其他大模型腾空间，
-  #    不通过本开关。
+  # Move the VLM to CPU before non-VLM modules to reduce peak memory usage.
+  # true  = lower peak memory, but slower because weights move between CPU and GPU.
+  # false = keep the VLM on GPU for faster evaluation when memory allows.
+  # Any6D may still trigger temporary offloading of other large models.
   vlm_offload: false
   modules:
-    geometry:              # R01+R01+R03 (VGGT-Omega + StableNormal)
+    geometry:              # R01+R02+R03 (VGGT-Omega + StableNormal)
       enabled: true
-    scale_pose:            # R04+R05+R06 (DA3+SAM3+Any6D+VGGT-Omega)
+    scale_pose:            # R04+R09+R10 (DA3+SAM3+Any6D+VGGT-Omega)
       enabled: true
-    deformation_spatial:   # R02+R07 (VGGT-Omega+SpatialTracker+SAM3)
+    deformation_spatial:   # R05+R11 (VGGT-Omega+SpatialTracker+SAM3)
       enabled: true
-    statics_lighting:      # R08+R13+R18 (VGGT-Omega+SAM3+ReasonX+StableNormal)
+    statics_lighting:      # R12+R13+R18 (VGGT-Omega+SAM3+ReasonX+StableNormal)
       enabled: true
-    material:              # R03 (Qwen3.8-27B)
+    material:              # R06 (Qwen3.8-27B)
       enabled: true
     thermal:               # R07 (Qwen3.8-27B)
       enabled: true
-    electromag:            # R09 (Qwen3.8-27B)
+    electromag:            # R14 (Qwen3.8-27B)
       enabled: true
     phase_change:          # R25 (Qwen3.8-27B)
       enabled: true
-    kinematics:            # R10+R11+R17 (SpatialTracker+Any6D)
+    kinematics:            # R15+R16+R17 (SpatialTracker+Any6D)
       enabled: true
-    motion_persistence:    # R12+R13+R14 (VGGT-Omega+FlowSeek+VFIMamba+SpatialTracker+SAM3)
+    motion_persistence:    # R19+R20+R21 (VGGT-Omega+FlowSeek+VFIMamba+SpatialTracker+SAM3)
       enabled: true
-    dynamics:              # R15+R23+R16 (SpatialTracker)
+    dynamics:              # R22+R23+R24 (SpatialTracker)
       enabled: true
     multiview:             # R08 多视图几何一致性 (VGGT-Omega)
       enabled: true        # T2V 用时间分镜/环绕镜头 proxy (temporal_multiview_proxy / continuous_view_sequence_proxy)
@@ -145,11 +141,10 @@ sampling:
   # 但对需要完整时序覆盖的维度（物体计数/恒存/光影时序/运动连续性）至关重要。
   # 设为空列表 [] 则全部模块使用采样帧；设为 null 则按默认规则自动决定。
   full_frame_modules:
-    - kinematics          # R10: 物体计数检测避免漏掉瞬态变化
+    - kinematics          # R15: 物体计数检测避免漏掉瞬态变化
     - dynamics            # R23: 碰撞发生在一瞬间, 32帧采样会错过碰撞拐点; 全帧精确定位碰撞
-    # motion_persistence  # 临时注释: 快速验证 skipped 根因, 用 32 帧采样替代 241 帧全帧 (提速~7x)
-    #                     # R14: 物体恒存需要全帧捕获出现/消失; R13: 运动连续性完整轨迹
-    # statics_lighting 已移除: R13/R18 光影一致性用 32 帧采样即可判断光源是否稳定,
-    # 全帧(240帧)逐帧跑 StableNormal+InternVL Judge 是最大性能开销(约7.5倍)。
+    # motion_persistence  # Enable for complete temporal coverage; disabled by default for speed.
+    #                     # R21: 物体恒存需要全帧捕获出现/消失; R20: 运动连续性完整轨迹
+    # statics_lighting is omitted by default; 32 sampled frames are usually sufficient.
   # 全帧加载最大帧数上限(防止超长视频OOM)。0=不限。
   full_frame_max: 300

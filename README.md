@@ -39,7 +39,7 @@ PVBench organizes **46 evaluation dimensions** into **7 domains** and **3 assess
   <img src="assets/overview.png" width="96%" alt="PVBench evaluation taxonomy overview">
 </div>
 
-> **Release note.** This repository contains first-party evaluation code and portable configuration examples. The full prompt set, reference images, generated videos, model weights, and third-party source trees are not bundled. Public release remains subject to the project patent filing and final rights review.
+> **Release note.** This repository contains first-party evaluation code and portable configuration examples. Public release remains subject to the project patent filing and final rights review.
 
 ## :bookmark_tabs: Contents
 
@@ -50,6 +50,7 @@ PVBench organizes **46 evaluation dimensions** into **7 domains** and **3 assess
 - [Quick start](#rocket-quick-start)
 - [Input manifest](#page_facing_up-input-manifest)
 - [Repository layout](#file_folder-repository-layout)
+- [Third-party models and deployment](#link-third-party-models-and-deployment)
 - [Reproducibility and data policy](#package-reproducibility-and-data-policy)
 - [Citation](#black_nib-citation)
 - [License](#scroll-license)
@@ -62,7 +63,7 @@ PVBench organizes **46 evaluation dimensions** into **7 domains** and **3 assess
 2. **Object-level physical measurements.** Specialized models extract quantities such as depth, metric scale, 6D pose, geometry, kinematics, and conservation-law residuals whenever the video makes them observable.
 3. **Matched T2V/I2V scenes.** Each prompt group defines a shared scene specification for text-to-video and image-to-video evaluation.
 4. **Hybrid evaluation protocol.** Quantitative measurement is combined with Qwen3.8-27B judgments for dimensions that cannot be reliably computed from pixels alone.
-5. **Source-level release.** The public package keeps the evaluator logic and examples lightweight while leaving private prompts, media, checkpoints, and generated outputs outside the repository.
+5. **Source-level release.** The public package keeps the first-party evaluator logic and examples lightweight for reproducible evaluation.
 
 <a name="benchmark"></a>
 
@@ -124,6 +125,41 @@ pip install -r requirements.txt
 ```
 
 The evaluator adapters are optional integrations. Some require additional packages, gated model access, local checkpoints, CUDA extensions, or separate upstream terms. They are intentionally not installed or redistributed by this repository.
+
+For the default NVIDIA configuration (`load_in_8bit: true`), install `bitsandbytes>=0.48.0` separately. If it is unavailable, the loader disables quantization and falls back to BF16, which requires substantially more GPU memory.
+
+<a name="third-party-models"></a>
+
+## :link: Third-party models and deployment
+
+PVBench exposes first-party evaluation adapters, but several adapters call third-party models or upstream repositories at runtime. The table below records the model families used by the default configuration and the corresponding deployment entry points. Obtain each model from its official model page or upstream repository, follow its access procedure, and configure a local path in `configs/config.yaml`.
+
+| Component | Role in PVBench | Upstream model / repository identifier | Configuration entry |
+|:--|:--|:--|:--|
+| **Qwen3.8-27B** | VLM judgments for semantic, perceptual, and hybrid physical dimensions | `Qwen3.8-27B` | `models.vlm.default.model_name` |
+| **DINOv3** | Visual features and image-level quality measurements | `facebook/dinov3-vitb16-pretrain-lvd1689m` | `models.quality.dino.model_id` |
+| **CLIP ViT-L/14** | Image-text alignment measurements | `openai/clip-vit-large-patch14` | Loaded by the specialist evaluator |
+| **FineVQ** | Video quality / aesthetic scoring | `IntMeGroup/FineVQ_score` | `models.quality.fineq.model_path` |
+| **SAM 3** | Object segmentation and mask tracking | `facebook/sam3` | `physics.sam3.checkpoint_path` |
+| **VGGT-Ω** | Geometry, depth, and pose estimation | `facebookresearch/vggt-omega` | `physics.vggt.model_path` |
+| **Depth Anything 3** | Metric depth and scale estimation | `depth-anything/DA3METRIC-LARGE` | `physics.da3.model_path` |
+| **StableNormal** | Surface-normal estimation (with its DINOv2 dependency) | `Stable-X/StableNormal`; internally uses `facebookresearch/dinov2` | `physics.stable_normal.model_path` |
+| **SpatialTracker V2** | Object trajectories and motion measurements | `Yuxihenry/SpatialTrackerV2_Front` and `Yuxihenry/SpatialTrackerV2-Offline` | `physics.spatial_tracker.model_path` |
+| **Any6D / FoundationPose** | 6D pose and mesh-based measurements | `taeyeopl/any6d` with its FoundationPose backend | `physics.any6d.model_path`, `physics.any6d.mesh_path` |
+| **ReasonX / InternVL2.5** | Intrinsic-lighting and shadow judgments | `adirik/InternVL2_5-4B-Intrinsic-Judge`; [ReasonX](https://github.com/adobe-research/ReasonX) | `physics.reasonx.model_path` |
+| **FlowSeek** | Optical-flow and motion consistency measurements | `mattpoggi/flowseek` | `physics.flowseek.model_path` |
+| **VFIMamba** | Video frame interpolation / motion measurements | `MCG-NJU/VFIMamba` | `physics.vfimamba.model_path` |
+
+### Deployment checklist
+
+1. Install the core requirements and a compatible PyTorch/CUDA build.
+2. For each enabled adapter, follow the upstream installation instructions and obtain the required checkpoint through the official access route.
+3. Copy `configs/config.example.yaml` to `configs/config.yaml`, then replace `null` values and model identifiers with local paths where required. Keep machine-specific paths in the untracked local file.
+4. Record the upstream repository revision, checkpoint revision, and relevant package versions when reporting results. This avoids silent changes when upstream models are updated.
+
+### License and attribution boundary
+
+The MIT license in this repository applies to PVBench first-party source files only. Third-party model weights, upstream source code, Python packages, CUDA extensions, and gated model services remain subject to their respective licenses, terms of use, and access conditions. If an upstream repository is copied into a local `third_party/` directory, retain its original `LICENSE` and `NOTICE` files and cite that project separately.
 
 <a name="quick-start"></a>
 
@@ -194,7 +230,7 @@ PVBench/
 
 ## :package: Reproducibility and data policy
 
-The full prompt set, I2V reference images, generated videos, private manifests, and evaluation outputs are maintained separately from this source-only release. This repository does **not** include a separate data package. Do not commit credentials, private paths, checkpoints, videos, reference media, or generated results.
+Private benchmark resources and generated artifacts are maintained separately from this source release. Do not commit credentials, private paths, checkpoints, media, or generated results.
 
 For reproducible comparisons, record the model versions, checkpoint revisions, evaluator versions, configuration, random seeds, hardware, and any external prompt/media bundle used for the run.
 
@@ -226,7 +262,7 @@ For questions and correspondence: [12632067@zju.edu.cn](mailto:12632067@zju.edu.
 
 ## :scroll: License
 
-First-party PVBench source is released under the [MIT License](LICENSE). This license does not cover optional third-party source code, model weights, datasets, prompts, reference images, or generated media.
+First-party PVBench source is released under the [MIT License](LICENSE). Optional third-party components remain subject to their own licenses and access terms.
 
 <div align="center">
   <a href="https://github.com/KSZG-11/PVBench">Code</a> ·

@@ -1,7 +1,5 @@
 # Core
-# ⚠️ torch / torchvision: 不要用 pip 装! 使用 GPU 节点系统自带的 cu118 版本。
-#    (节点 driver 470 只兼容 CUDA 11.x; 装 cu12x 的 torch 会 Error 803 → GPU 不可用)
-#    确认: python3 -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+# Install torch/torchvision separately from the official PyTorch selector so the build matches the local CUDA or ROCm runtime.
 # torch>=2.1.0
 # torchvision
 transformers>=4.57.0          # Qwen3.8-27B processor/model APIs
@@ -30,7 +28,6 @@ open_clip_torch         # CLIP model (optional, transformers CLIP also works)
 # StableNormal 需要 diffusers (自定义 pipeline)
 # ⚠️ Wan2.1 pipeline (WanPipeline/WanImageToVideoPipeline) 从 diffusers 0.33 才开始加入,
 #    Older versions may not provide WanPipeline/WanImageToVideoPipeline.
-#    (旧 A100 torch2.2.2 的 xpu 约束已不适用: 现 H20 是 torch2.7.1)
 diffusers>=0.33.0
 # SpatialTracker V2 predictor 需要 decord 读视频
 decord
