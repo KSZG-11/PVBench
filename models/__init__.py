@@ -16,7 +16,6 @@ from .any6d import Any6DModel
 from .flowseek import FlowSeekModel
 from .vfimamba import VFIMambaModel
 from .finevq import FineVQModel
-from .genesis import GenesisEngine
 from .specialist import SpecialistModels
 
 __all__ = [
@@ -33,7 +32,6 @@ __all__ = [
     "FlowSeekModel",
     "VFIMambaModel",
     "FineVQModel",
-    "GenesisEngine",
     # Quality models
     "SpecialistModels",
     # Output dataclasses

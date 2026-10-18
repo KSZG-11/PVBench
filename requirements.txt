@@ -45,8 +45,5 @@ decord
 
 # VFIMamba: follow official repository
 
-# Genesis:
-# genesis-world (pending stable release)
-
 # Reporting
 matplotlib>=3.7     # optional, for radar charts

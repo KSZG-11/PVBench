@@ -19,7 +19,6 @@ from .any6d import Any6DModel
 from .flowseek import FlowSeekModel
 from .vfimamba import VFIMambaModel
 from .finevq import FineVQModel
-# Genesis 已移除：AC-1 动作因果改用反事实动作对评测
 from .specialist import SpecialistModels
 
 
