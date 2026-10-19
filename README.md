@@ -14,9 +14,9 @@
 </p>
 
 <p>
-  <sup>1</sup>Zhejiang University &nbsp;&nbsp;
-  <sup>2</sup>ByteDance &nbsp;&nbsp;
-  <sup>3</sup>Tencent
+  <sup>1</sup>APRIL Lab, Zhejiang University &nbsp;&nbsp;
+  <sup>2</sup>Huazhong University of Science and Technology &nbsp;&nbsp;
+  <sup>3</sup>Tencent Youtu Lab
 </p>
 
 <p>
