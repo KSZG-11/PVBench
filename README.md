@@ -20,7 +20,7 @@
 </p>
 
 <p>
-  <img src="https://img.shields.io/badge/arXiv-PDF%20coming%20soon-b31b1b?style=flat&logo=arxiv&logoColor=white" alt="arXiv PDF coming soon">
+  <a href="https://arxiv.org/abs/2610.26711"><img src="https://img.shields.io/badge/arXiv-2610.26711-b31b1b?style=flat&logo=arxiv&logoColor=white" alt="arXiv: 2610.26711"></a>
   <a href="https://kszg-11.github.io/PVBench-Website/"><img src="https://img.shields.io/badge/Project-Website-2ea44f?style=flat&logo=googlechrome&logoColor=white" alt="Project website"></a>
   <a href="mailto:12632067@zju.edu.cn"><img src="https://img.shields.io/badge/Contact-12632067%40zju.edu.cn-4c8bf5?style=flat&logo=minutemailer&logoColor=white" alt="Contact"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
@@ -249,10 +249,13 @@ python -m unittest discover -s tests -v
 If PVBench is useful for your research, please consider citing the paper:
 
 ```bibtex
-@article{pvbench2026,
+@article{chen2026pvbench,
   title   = {PVBench: Quantifying Physical Plausibility in Video Generation with Object-Level Physical Measurements},
   author  = {Chen, Kaiwei and Li, Moran and Gan, Zhenye and Wang, Yabiao and Wang, Chengjie and Zhang, Kexin and Liu, Yong and Zhang, Jiangning},
-  year    = {2026}
+  year    = {2026},
+  eprint  = {2610.26711},
+  archivePrefix = {arXiv},
+  url     = {https://arxiv.org/abs/2610.26711}
 }
 ```
 
