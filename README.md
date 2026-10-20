@@ -6,11 +6,11 @@
   <strong>Kaiwei Chen<sup>1</sup></strong> ·
   <strong>Moran Li<sup>2</sup></strong> ·
   <strong>Zhenye Gan<sup>3</sup></strong> ·
-  <strong>Yabiao Wang<sup>3</sup></strong><br />
+  <strong>Yabiao Wang<sup>3</sup></strong> ·
   <strong>Chengjie Wang<sup>3</sup></strong> ·
-  <strong>Kexin Zhang<sup>1</sup></strong> ·
-  <strong>Yong Liu<sup>1</sup></strong> ·
-  <strong>Jiangning Zhang<sup>1</sup></strong>
+  <strong>Kexin Zhang<sup>1</sup></strong><br />
+  <strong>Yong Liu<sup>1</sup><sup><a href="mailto:yongliu@iipc.zju.edu.cn" title="Email Yong Liu">✉</a></sup></strong> ·
+  <strong>Jiangning Zhang<sup>1</sup><sup><a href="mailto:186368@zju.edu.cn" title="Email Jiangning Zhang">✉</a></sup></strong>
 </p>
 
 <p>
